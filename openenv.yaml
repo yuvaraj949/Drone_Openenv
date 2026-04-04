@@ -1,0 +1,53 @@
+name: drone_traffic_control
+version: "0.1"
+description: >
+  Autonomous Drone Traffic Control — a multi-agent routing environment
+  where an LLM agent must coordinate a fleet of drones across a city
+  airspace grid, avoid collisions, prioritise emergency deliveries,
+  and manage battery constraints.
+
+observation_type: Observation     # schema defined in environment/models.py
+action_type: Action               # schema defined in environment/models.py
+reward_type: Reward               # schema defined in environment/models.py
+
+max_episode_steps: 50             # hard cap (overridden per task)
+
+tasks:
+  - name: easy
+    description: "3 drones, 1 emergency, 3×3 grid, 30 steps"
+    max_steps: 30
+    num_drones: 3
+    num_emergencies: 1
+    grid: "3x3"
+
+  - name: medium
+    description: "5 drones, 2 emergencies, 4×4 grid with bottleneck zones, 40 steps"
+    max_steps: 40
+    num_drones: 5
+    num_emergencies: 2
+    grid: "4x4"
+
+  - name: hard
+    description: "10 drones, 3 emergencies, 5×5 grid with dynamic obstacles, 50 steps"
+    max_steps: 50
+    num_drones: 10
+    num_emergencies: 3
+    grid: "5x5"
+
+grader:
+  module: environment.graders
+  function: grade_task
+  score_range: [0.0, 1.0]
+
+agent:
+  baseline: inference.py
+  type: greedy_bfs
+  notes: >
+    Swap the act() function in inference.py with an LLM or RL agent.
+    The environment is agnostic to the agent implementation.
+
+scoring_weights:
+  delivery_rate: 0.50
+  collision_score: 0.25
+  emergency_score: 0.15
+  efficiency_score: 0.10

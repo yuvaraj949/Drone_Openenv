@@ -1,0 +1,26 @@
+# Core runtime
+pydantic>=2.5.0
+PyYAML>=6.0
+
+# Visualization
+rich>=13.0
+matplotlib>=3.8
+Pillow>=10.0
+
+# HuggingFace Spaces UI
+gradio>=4.20.0
+
+# Optional: Ollama LLM agent (local, no API key)
+# ollama>=0.1.7
+
+# PEDRA-inspired RL Agent
+torch>=2.0.0
+tensorboard>=2.14.0
+airsim>=1.8.0
+
+# Optional: RL baseline
+# gymnasium>=0.29.1
+# stable-baselines3>=2.3.0
+
+# Dev / testing
+pytest>=8.0.0
