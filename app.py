@@ -204,14 +204,24 @@ def run_episode_gradio(
         # 3D Vertical Separation Logic: Assigned 'Highways' for 10 drones
         if use_3d:
             safety_margin = env.cfg.get("safety_margin", 2.5)
-            # Assign each drone a unique altitude offset to avoid ALL vertical collisions
+            # Maintain assigned altitude highway to avoid vertical collisions
             for i, a in enumerate(action.actions):
                 try:
                     # Extract index from 'Drone0', 'Drone1', etc.
                     d_idx = int(''.join(filter(str.isdigit, a.drone_id)))
                 except:
                     d_idx = i
-                a.vertical_command = d_idx * safety_margin
+                
+                # Target altitude is the highway offset
+                target_alt = d_idx * safety_margin
+                
+                # Find actual drone state to check current altitude
+                drone = next((d for d in obs.drones if d.id == a.drone_id), None)
+                if drone:
+                    # Move towards the target altitude highway
+                    diff = target_alt - drone.altitude
+                    # We limit vertical speed to 2.0m per step for smoothness
+                    a.vertical_command = float(np.clip(diff, -2.0, 2.0))
 
         obs, reward, done, info = env.step(action)
         step_rewards.append(reward.total)

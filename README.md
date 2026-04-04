@@ -23,6 +23,8 @@ drone_traffic_control/
 
 ## 🚀 Getting Started
 
+**Looking for the full installation and training guide?** See [setup.md](setup.md) for detailed instructions on virtual environments, training DQN/PPO agents, and benchmarking results.
+
 ### 1. Install Dependencies
 
 ```bash
