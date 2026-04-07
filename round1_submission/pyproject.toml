@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drone-traffic-control"
+version = "1.0.0"
+description = "Autonomous Drone Dispatcher 3D — OpenEnv Environment"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "openenv-core>=0.2.0",
+    "torch>=2.0",
+    "numpy>=1.20",
+    "fastapi>=0.100",
+    "uvicorn>=0.20",
+    "httpx>=0.24",
+    "openai>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.20",
+    "black>=23.0",
+    "isort>=5.0",
+]
+
+[tool.setuptools]
+packages = ["environment"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
