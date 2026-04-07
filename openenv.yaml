@@ -1,0 +1,41 @@
+# OpenEnv Manifest
+name: drone_dispatch_3d
+version: "1.0.0"
+openenv_version: "0.2.0"
+description: >
+  Autonomous Drone Dispatcher 3D — A high-fidelity logistics simulation
+  requiring vertical separation and collision avoidance in a grid-based airspace.
+
+# Type specifications (Pydantic models)
+observation_type: environment.models.Observation
+action_type: environment.models.Action
+reward_type: environment.models.Reward
+
+# Default constraints
+max_episode_steps: 50
+
+# Task definitions
+tasks:
+  - name: easy
+    description: "3 drones, 3x3 grid, zero obstacles. Basic navigation check."
+    max_steps: 30
+
+  - name: medium
+    description: "5 drones, 4x4 grid, battery drains + bottleneck zones (restricted capacity)."
+    max_steps: 40
+
+  - name: hard
+    description: "10 drones, 5x5 grid, dynamic No-Fly Zones (NFZ) + emergency medical priorities."
+    max_steps: 50
+
+# Grader logic
+grader:
+  module: environment.graders
+  function: grade_task
+  score_range: [0.0, 1.0]
+
+# Baseline agent for scoring reproduction
+agent:
+  baseline: inference.py
+  type: greedy-bfs
+  notes: "Uses Greedy-BFS with vertical altitude highways for collision avoidance."
