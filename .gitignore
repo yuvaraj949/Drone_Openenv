@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+requirements_no_airsim.txt
+*.webp
+*.gif
+*.png
+!hard_test.gif
+!medium_test.gif
+!test_output.gif

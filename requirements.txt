@@ -16,8 +16,7 @@ gradio>=4.20.0
 # PEDRA-inspired RL Agent
 torch>=2.0.0
 tensorboard>=2.14.0
-airsim>=1.8.0
-
+cosysairsim
 # Optional: RL baseline
 # gymnasium>=0.29.1
 # stable-baselines3>=2.3.0

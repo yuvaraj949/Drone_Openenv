@@ -9,7 +9,7 @@ import io
 import json
 import tempfile
 import time
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Dict, Generator, List, Tuple, Optional
 
 import numpy as np
 import gradio as gr
@@ -121,7 +121,7 @@ def run_episode_gradio(
     use_airsim: bool = False,
     airsim_ip: str = "127.0.0.1",
     airsim_port: int = 41451,
-) -> Tuple[str, str, Dict[str, Any]]:
+) -> Tuple[str, Optional[str], Dict[str, Any]]:
     """
     Run a full episode synchronously.
 

@@ -17,10 +17,13 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 _AIRSIM_IMPORT_ERROR = None
 try:
-    import airsim
+    import cosysairsim as airsim
 except Exception as _e:
-    airsim = None
-    _AIRSIM_IMPORT_ERROR = str(_e)
+    try:
+        import airsim
+    except Exception as _e2:
+        airsim = None
+        _AIRSIM_IMPORT_ERROR = f"cosysairsim error: {str(_e)}\nairsim error: {str(_e2)}"
 
 from .models import (
     Action,
