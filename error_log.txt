@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "C:\Users\Hp\OneDrive\Desktop\Drone_Openenv\catch_error.py", line 5, in <module>
+    import app
+  File "C:\Users\Hp\OneDrive\Desktop\Drone_Openenv\app.py", line 22, in <module>
+    from rl_agent.dqn_agent import DDQNAgent
+  File "C:\Users\Hp\OneDrive\Desktop\Drone_Openenv\rl_agent\dqn_agent.py", line 17, in <module>
+    from torch.utils.tensorboard import SummaryWriter
+  File "C:\Users\Hp\AppData\Local\Programs\Python\Python314\Lib\site-packages\torch\utils\tensorboard\__init__.py", line 1, in <module>
+    import tensorboard
+ModuleNotFoundError: No module named 'tensorboard'

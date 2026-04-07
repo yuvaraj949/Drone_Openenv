@@ -5,21 +5,18 @@ import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-import io
-import json
 import tempfile
-import time
-from typing import Any, Dict, Generator, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 import numpy as np
 import gradio as gr
 
 from environment.drone_env import DroneTrafficEnv
-from environment.graders import grade_episode_log, grade_task
-from environment.models import Action, DroneAction, DroneState, HOVER, Observation
-from collections import deque, defaultdict
-import torch # pyright: ignore[reportMissingImports]
+from environment.graders import grade_task
+from environment.models import Action, DroneAction, HOVER, Observation
+from collections import deque
 from rl_agent.dqn_agent import DDQNAgent
+import torch
 import configparser
 
 def read_config(path: str) -> dict:
