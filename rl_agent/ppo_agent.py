@@ -16,7 +16,7 @@ from torch.distributions import Normal
 from environment.models import Action, DroneAction, Observation
 
 class ActorCritic(nn.Module):
-    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 128):
+    def __init__(self, state_dim: int, action_dim: int, hidden_dim: int = 256):
         super(ActorCritic, self).__init__()
         
         # Actor network (Policy)
@@ -52,8 +52,8 @@ class PPOAgent:
     """
     PPO Agent for continuous 3D drone control under wind.
     """
-    def __init__(self, state_dim: int = 12, action_dim: int = 3, lr: float = 3e-4, 
-                 gamma: float = 0.99, K_epochs: int = 10, eps_clip: float = 0.2):
+    def __init__(self, state_dim: int = 36, action_dim: int = 3, lr: float = 3e-4, 
+                 gamma: float = 0.99, K_epochs: int = 20, eps_clip: float = 0.2):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
         self.gamma = gamma
@@ -96,22 +96,99 @@ class PPOAgent:
 
     def _extract_state(self, obs: Observation, drone_idx: int) -> np.ndarray:
         d = obs.drones[drone_idx]
+        pos = np.array([d.x, d.y, d.altitude])
+        vel = np.array([d.vx, d.vy, d.vz])
         
-        # In AirSim or Physics Mode, x and y are meters.
-        # target_x, target_y will also be extracted if destination is set.
-        # For this demo, we use d.x and d.y directly.
-        state = [
-            d.x, d.y, d.altitude,
-            d.vx, d.vy, d.vz,
-            obs.wind_vector[0], obs.wind_vector[1], obs.wind_vector[2],
-            0.0, 0.0, d.target_altitude # Placeholder for target_x, y
-        ]
-        return np.array(state, dtype=np.float32)
+        # 1. Self State (7)
+        # Placeholder for target (ideally passed from environment/task)
+        target = np.array([3.0, 3.0, 0.0]) if d.destination == "C3" else np.array([0.0, 0.0, 0.0])
+        rel_target = target - pos
+        self_state = rel_target.tolist() + vel.tolist() + [d.battery / 100.0]
+        
+        # 2. Wind State (3)
+        wind_state = obs.wind_vector
+        
+        # 3. Neighbor State (K=3 nearest within radius) (18)
+        neighbors = []
+        for i, other in enumerate(obs.drones):
+            if i == drone_idx or other.delivered or other.battery <= 0:
+                continue
+            other_pos = np.array([other.x, other.y, other.altitude])
+            dist = np.linalg.norm(pos - other_pos)
+            if dist < obs.sensing_radius:
+                rel_pos = other_pos - pos
+                rel_vel = np.array([other.vx, other.vy, other.vz]) - vel
+                neighbors.append((dist, rel_pos, rel_vel))
+        
+        neighbors.sort(key=lambda x: x[0])
+        neighbor_feats = []
+        for i in range(3):
+            if i < len(neighbors):
+                neighbor_feats.extend(neighbors[i][1].tolist())
+                neighbor_feats.extend(neighbors[i][2].tolist())
+            else:
+                neighbor_feats.extend([0.0]*6)
+                
+        # 4. Obstacle State (O=2 nearest) (8)
+        obstacles = []
+        for ob in obs.stationary_obstacles:
+            ob_pos = np.array([ob.x, ob.y, ob.z])
+            dist = np.linalg.norm(pos - ob_pos)
+            obstacles.append((dist, ob_pos - pos, ob.radius))
+            
+        obstacles.sort(key=lambda x: x[0])
+        obstacle_feats = []
+        for i in range(2):
+            if i < len(obstacles):
+                obstacle_feats.extend(obstacles[i][1].tolist())
+                obstacle_feats.append(obstacles[i][2])
+            else:
+                obstacle_feats.extend([0.0]*4)
+                
+        full_state = self_state + wind_state + neighbor_feats + obstacle_feats
+        return np.array(full_state, dtype=np.float32)
 
-    def update(self, memory):
-        # Implementation of PPO update would go here for training
-        # For this integration, we focus on the inference architecture
-        pass
+    def update(self, states, actions, logprobs, rewards, dones):
+        states = torch.stack(states).to(self.device).detach()
+        actions = torch.stack(actions).to(self.device).detach()
+        logprobs = torch.stack(logprobs).to(self.device).detach()
+        
+        # Monte Carlo estimate of state rewards
+        returns = []
+        discounted_reward = 0
+        for reward, is_terminal in zip(reversed(rewards), reversed(dones)):
+            if is_terminal:
+                discounted_reward = 0
+            discounted_reward = reward + (self.gamma * discounted_reward)
+            returns.insert(0, discounted_reward)
+            
+        returns = torch.tensor(returns, dtype=torch.float32).to(self.device)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-5)
+        
+        for _ in range(self.K_epochs):
+            dist, state_values = self.policy(states)
+            entropy = dist.entropy().sum(dim=-1)
+            new_logprobs = dist.log_prob(actions).sum(dim=-1)
+            
+            # Policy Loss
+            ratios = torch.exp(new_logprobs - logprobs)
+            advantages = returns - state_values.detach().squeeze()
+            
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratios, 1-self.eps_clip, 1+self.eps_clip) * advantages
+            policy_loss = -torch.min(surr1, surr2).mean()
+            
+            # Critic Loss
+            critic_loss = self.MseLoss(state_values.squeeze(), returns)
+            
+            # Total Loss
+            loss = policy_loss + 0.5*critic_loss - 0.01*entropy.mean()
+            
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            
+        self.policy_old.load_state_dict(self.policy.state_dict())
 
     def save(self, path: str):
         torch.save(self.policy.state_dict(), path)

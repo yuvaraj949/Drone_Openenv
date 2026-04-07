@@ -60,13 +60,16 @@ class DDQNAgent:
     sharing the same weights (Parameter Sharing MA-DQN).
     """
     
-    def __init__(self, cfg: Dict, num_zones: int, zone_names: List[str]):
+    def __init__(self, cfg: Dict, num_zones: int, zone_names: List[str], graph: Dict[str, List[str]] = None, task_cfg: Dict = None):
         # The agent needs to know the zone list to map indices to zone strings
         self.zone_names = zone_names
+        self.graph = graph or {}
+        self.task_cfg = task_cfg or {}
         
         # Determine I/O shapes
-        # State: [Drone row, Drone col, Dest row, Dest col, Battery (0-1), Priority, Step/Max] = 7 features
-        self.state_dim = 7  
+        # State: [Drone row, Drone col, Dest row, Dest col, Battery (0-1), Priority, Step/Max, 
+        #         Congestion_Self, Congestion_Up, Congestion_Down, Congestion_Left, Congestion_Right] = 12 features
+        self.state_dim = 12
         self.action_dim = num_zones + 1 # Include 'hover'
         self.HOVER_IDX = num_zones
 
@@ -124,19 +127,47 @@ class DDQNAgent:
             coords[z] = (char_p, num_p)
         return coords
 
-    def _extract_drone_state(self, obs: Observation, drone_idx: int) -> np.ndarray:
+    def _extract_drone_state(self, obs: Observation, drone_idx: int, step: int = 0) -> np.ndarray:
         """Flattens a specific drone's state into a vector."""
         d = obs.drones[drone_idx]
         
         r1, c1 = self.zone_coords.get(d.location, (0,0))
         r2, c2 = self.zone_coords.get(d.destination, (0,0))
+        
+        # Grid dimensions for normalization
+        rows = self.task_cfg.get("rows", 3)
+        cols = self.task_cfg.get("cols", 3)
+        
+        # Normalize coordinates to [0, 1]
+        nr1, nc1 = r1 / max(1, rows - 1), c1 / max(1, cols - 1)
+        nr2, nc2 = r2 / max(1, rows - 1), c2 / max(1, cols - 1)
+        
         bat = max(0.0, d.battery / 100.0)
         pri = d.priority
-        step_prog = 0.0 # Will be passed from env ideally, for now placeholder 0
         
-        return np.array([r1, c1, r2, c2, bat, pri, step_prog], dtype=np.float32)
+        # Calculate step progression (0.0 to 1.0)
+        max_steps = self.task_cfg.get("max_steps", 30)
+        step_prog = min(1.0, step / max_steps)
+        
+        # Local Congestion (Coordination Senses)
+        row_l = d.location[0]
+        col_l = int(d.location[1:])
+        
+        neighbors = [
+            d.location,                       # Center
+            f"{chr(ord(row_l)-1)}{col_l}",    # Up
+            f"{chr(ord(row_l)+1)}{col_l}",    # Down
+            f"{row_l}{col_l-1}",              # Left
+            f"{row_l}{col_l+1}"               # Right
+        ]
+        
+        # Extract congestion and normalize (max drones in grid ~5-10)
+        congestion_features = [obs.congestion_map.get(n, 0) / 10.0 for n in neighbors]
+        
+        base_features = [nr1, nc1, nr2, nc2, bat, pri, step_prog]
+        return np.array(base_features + congestion_features, dtype=np.float32)
 
-    def select_action(self, obs: Observation, training: bool = True) -> Action:
+    def select_action(self, obs: Observation, training: bool = True, step: int = 0) -> Action:
         """
         Takes environment observation, issues joint action for all drones.
         Uses PEDRA's greedy vs random exploration toggle.
@@ -152,22 +183,23 @@ class DDQNAgent:
                 drone_actions.append(DroneAction(drone_id=d.id, move_to=HOVER))
                 continue
                 
-            state = self._extract_drone_state(obs, i)
+            state = self._extract_drone_state(obs, i, step)
             state_t = torch.FloatTensor(state).unsqueeze(0).to(self.device)
             
             if training and random.random() < self.epsilon:
-                # Random valid action
-                action_idx = random.randint(0, self.action_dim - 1)
+                # Random VALID action (adjacent or hover)
+                valid_moves = self.graph.get(d.location, []) + [HOVER]
+                move = random.choice(valid_moves)
             else:
                 with torch.no_grad():
                     q_values = self.q_net(state_t)
                     action_idx = q_values.argmax(dim=1).item()
                     
-            # Convert action_idx back to zone name
-            if action_idx == self.HOVER_IDX:
-                move = HOVER
-            else:
-                move = self.zone_names[action_idx]
+                # Convert action_idx back to zone name
+                if action_idx == self.HOVER_IDX:
+                    move = HOVER
+                else:
+                    move = self.zone_names[action_idx]
                 
             drone_actions.append(DroneAction(drone_id=d.id, move_to=move))
             
@@ -180,7 +212,8 @@ class DDQNAgent:
                          action: Action, 
                          reward_val: float, 
                          next_obs: Observation, 
-                         done: bool):
+                         done: bool,
+                         step: int = 0):
         """
         Stores INDIVIDUAL drone transitions into the PER buffer.
         """
@@ -189,8 +222,8 @@ class DDQNAgent:
             if d.battery <= 0.0 or d.delivered:
                 continue
                 
-            state = self._extract_drone_state(obs, i)
-            next_state = self._extract_drone_state(next_obs, i)
+            state = self._extract_drone_state(obs, i, step)
+            next_state = self._extract_drone_state(next_obs, i, step + 1)
             
             # Find action index for this drone
             act_str = next(a.move_to for a in action.actions if a.drone_id == d.id)

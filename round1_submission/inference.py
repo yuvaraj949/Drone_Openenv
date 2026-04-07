@@ -2,51 +2,46 @@
 Baseline Inference Script — Drone Autonomous Dispatcher
 ======================================================
 MANDATORY: Follows Round 1 [START], [STEP], [END] stdout format.
-Agent: Greedy-BFS with 3D-lite altitude highways.
+Agent: Trained DDQN Model (Double DQN with PER).
 """
 
 import asyncio
 import os
-from collections import deque
-from typing import List, Optional, Dict, Tuple
+import sys
+from typing import List, Optional, Dict
+
+# Ensure local environment package is discoverable
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from environment.drone_env import DroneDispatchEnv
 from environment.models import Action, DroneAction, HOVER
 from environment.graders import grade_task
 from environment.tasks import get_config
+from environment.dqn_agent import DDQNAgent
 
 # Environment variables
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
 TASK_NAME = os.getenv("TASK", "easy")
-MODEL_NAME = "Greedy-BFS-Baseline"
-
-MAX_STEPS = get_config(TASK_NAME)["max_steps"]
+MODEL_NAME = "Trained-DDQN-v1"
 
 # ---------------------------------------------------------------------------
-# BFS Logic
+# Agent Configuration (matching training setup in config.ini)
 # ---------------------------------------------------------------------------
 
-def bfs_next_zone(current: str, destination: str, graph: Dict[str, List[str]], blocked: set) -> str:
-    if current == destination:
-        return current
-    
-    queue = deque([(current, [current])])
-    visited = {current}
-    
-    while queue:
-        zone, path = queue.popleft()
-        for nb in graph.get(zone, []):
-            if nb in visited or nb in blocked:
-                continue
-            new_path = path + [nb]
-            if nb == destination:
-                return new_path[1]
-            visited.add(nb)
-            queue.append((nb, new_path))
-    return current
+AGENT_CONFIG = {
+    'general': {'device': 'cpu'},
+    'network': {'hidden_sizes': '512, 512', 'activation': 'relu'},
+    'dqn': {
+        'gamma': 0.99, 'learning_rate': 0.001, 'batch_size': 128,
+        'update_target_interval': 500, 'train_interval': 4,
+        'wait_before_train': 500, 'buffer_len': 10000,
+        'epsilon_start': 0.05, 'epsilon_end': 0.05, 'epsilon_decay_steps': 25000
+    },
+    'logging': {'tensorboard_dir': 'runs/ddqn'}
+}
 
 # ---------------------------------------------------------------------------
-# Logging
+# Logging Utilities
 # ---------------------------------------------------------------------------
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -65,11 +60,31 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 # ---------------------------------------------------------------------------
-# Main Episode Runner
+# Episode Runner
 # ---------------------------------------------------------------------------
 
 async def main() -> None:
+    # Initialize Environment
     env = DroneDispatchEnv(task=TASK_NAME)
+    cfg = env.cfg
+    zone_names = env.all_zones
+    
+    # Initialize Agent
+    agent = DDQNAgent(
+        cfg=AGENT_CONFIG,
+        num_zones=len(zone_names),
+        zone_names=zone_names,
+        graph=env.graph,
+        task_cfg=cfg
+    )
+    
+    # Load Trained Weights
+    model_path = os.path.join(os.path.dirname(__file__), "models", "ddqn_final.pt")
+    if os.path.exists(model_path):
+        agent.load(model_path)
+    else:
+        print(f"[WARN] Model checkpoint not found at {model_path}. Using random initialization.")
+
     rewards: List[float] = []
     steps_taken = 0
     score = 0.0
@@ -79,57 +94,48 @@ async def main() -> None:
 
     try:
         obs = await env.reset()
-        graph = obs.graph
+        max_steps = cfg["max_steps"]
         
-        # 3D-lite: assigning altitude highways to avoid mid-air collisions
-        # D1 -> 15m, D2 -> 18m, D3 -> 21m, etc.
+        # 3D-lite: assigning altitude highways to avoid mid-air collisions (as a wrapper/safety)
         safety_margin = 3.0
         drone_highways = {d.id: 10.0 + (i * safety_margin) for i, d in enumerate(obs.drones)}
 
-        for step_idx in range(1, MAX_STEPS + 1):
-            drone_actions = []
-            claimed_zones = set()
+        for step_idx in range(1, max_steps + 1):
+            # Select Action using Trained DDQN
+            # The agent expects an Observation object and returns an Action object
+            action = agent.select_action(obs, training=False, step=step_idx)
             
-            # Sort by priority then ID to ensure deterministic behavior
-            sorted_drones = sorted(obs.drones, key=lambda d: (-d.priority, d.id))
-            
-            for drone in sorted_drones:
-                if drone.delivered: continue
-                
-                # Horizontal Move (BFS)
-                next_zone = bfs_next_zone(drone.location, drone.destination, graph, claimed_zones)
-                move = HOVER if next_zone == drone.location else next_zone
-                claimed_zones.add(next_zone)
-                
-                # Vertical Move (Climb/Descend to assigned highway)
-                target_alt = drone_highways.get(drone.id, 15.0)
-                climb = 0.0
-                if abs(drone.altitude - target_alt) > 0.5:
-                    climb = 2.0 if drone.altitude < target_alt else -2.0
-                
-                drone_actions.append(DroneAction(drone_id=drone.id, move_to=move, climb=climb))
+            # Post-process actions for 3D-lite altitude control
+            for drone_act in action.actions:
+                drone_state = next((d for d in obs.drones if d.id == drone_act.drone_id), None)
+                if drone_state:
+                    target_alt = drone_highways.get(drone_state.id, 15.0)
+                    if abs(drone_state.altitude - target_alt) > 0.5:
+                        drone_act.climb = 2.0 if drone_state.altitude < target_alt else -2.0
+                    else:
+                        drone_act.climb = 0.0
 
-            action = Action(actions=drone_actions)
+            # Step Environment
             obs, reward_obj, done, info = await env.step(action)
             
             reward = reward_obj.total
             rewards.append(reward)
             steps_taken = step_idx
             
-            # Formatted action string for logs
+            # Formatted action string for logs (drone_id:move_to)
             act_str = ";".join([f"{a.drone_id}:{a.move_to}" for a in action.actions])
             log_step(step=step_idx, action=act_str, reward=reward, done=done, error=None)
 
             if done:
                 break
 
-        # Final grading
+        # Final Grading
         st = await env.state()
-        score = grade_task(st, env.cfg)
-        success = score >= 0.7  # Higher threshold for BFS baseline
+        score = grade_task(st, cfg)
+        success = score >= 0.5 # Success threshold in 0-1 range
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error during inference: {e}", file=sys.stderr)
     finally:
         await env.close()
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)

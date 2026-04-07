@@ -1,5 +1,0 @@
-Usage: openenv validate [OPTIONS] [TARGET]
-Try 'openenv validate --help' for help.
-+- Error ---------------------------------------------------------------------+
-| No such option: --rich                                                      |
-+-----------------------------------------------------------------------------+

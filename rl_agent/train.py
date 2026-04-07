@@ -36,7 +36,7 @@ def train():
     # Extract zones list for the agent
     zone_names = list(env.cfg["graph"].keys())
     
-    agent = DDQNAgent(cfg, len(zone_names), zone_names)
+    agent = DDQNAgent(cfg, len(zone_names), zone_names, graph=env.graph, task_cfg=env.cfg)
     
     max_episodes = int(gen_cfg['max_episodes'])
     model_dir = cfg['logging']['model_dir']
@@ -50,12 +50,14 @@ def train():
         ep_reward = 0.0
         
         while not done:
-            action = agent.select_action(obs, training=True)
+            # Pass current step to agent
+            step = info['step'] if 'info' in locals() else 0
+            action = agent.select_action(obs, training=True, step=step)
             
             next_obs, reward, done, info = env.step(action)
             
-            # Add to PER memory
-            agent.store_transition(obs, action, reward.total, next_obs, done)
+            # Add to PER memory with step
+            agent.store_transition(obs, action, reward.total, next_obs, done, step=step)
             
             # Step training
             agent.train_step()
@@ -70,6 +72,22 @@ def train():
         if ep % 10 == 0:
             print(f"Episode {ep:04d} | Reward: {ep_reward:+.2f} | EPS: {agent.epsilon:.3f} | Steps: {info['step']}")
             
+        # Periodic Evaluation
+        if ep % 50 == 0:
+            print(f"--- Evaluating at Episode {ep} ---")
+            eval_obs = env.reset()
+            eval_done = False
+            eval_reward = 0
+            eval_steps = 0
+            while not eval_done:
+                eval_action = agent.select_action(eval_obs, training=False, step=eval_steps)
+                eval_obs, r, eval_done, eval_info = env.step(eval_action)
+                eval_reward += r.total
+                eval_steps += 1
+            print(f"Eval Reward: {eval_reward:+.2f} | Collisions: {eval_info['cumulative_collisions']} | Delivered: {eval_info['delivered']}/3")
+            agent.writer.add_scalar("Eval/Reward", eval_reward, ep)
+            agent.writer.add_scalar("Eval/Delivered", eval_info['delivered'], ep)
+
         if ep % int(cfg['logging']['save_every_episodes']) == 0:
             path = os.path.join(model_dir, f"ddqn_chkpt_ep{ep}.pt")
             agent.save(path)

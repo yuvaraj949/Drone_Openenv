@@ -1,8 +1,0 @@
-openenv-core
-pydantic
-pydantic-settings
-openai
-fastapi
-uvicorn
-httpx
-python-dotenv

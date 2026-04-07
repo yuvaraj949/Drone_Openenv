@@ -134,12 +134,17 @@ class DroneTrafficEnv:
             if drone.delivered:
                 continue
 
+            old_dist = self._get_manhattan_dist(drone.location, drone.destination)
             act_target, dz = action_map.get(drone.id, (HOVER, 0.0))
             requested_zone = drone.location if act_target == HOVER else act_target
 
             # Validate horizontal move
             valid_zone = self._validate_move(drone, requested_zone, blocked_zones)
             drone.location = valid_zone
+            
+            new_dist = self._get_manhattan_dist(drone.location, drone.destination)
+            # Distance reward (Shaping)
+            step_reward_components.distance_reward += (old_dist - new_dist) * 2.0
             
             # Update altitude (Option B - Continuous)
             old_alt = drone.altitude
@@ -159,9 +164,9 @@ class DroneTrafficEnv:
             # Let's say reaching the zone is enough for now, but 3D state is tracked.
             if drone.location == drone.destination and not drone.delivered:
                 drone.delivered = True
-                step_reward_components.deliveries += 1.0
+                step_reward_components.deliveries += 20.0
                 if drone.priority == 2 and drone.steps_taken <= self.emergency_deadline:
-                    step_reward_components.emergency_bonus += 1.0
+                    step_reward_components.emergency_bonus += 10.0
 
             new_positions[drone.location].append(drone)
 
@@ -186,6 +191,7 @@ class DroneTrafficEnv:
         total_step_reward = (
             step_reward_components.deliveries
             + step_reward_components.step_penalty
+            + step_reward_components.distance_reward
             + step_reward_components.collision_penalty
             + step_reward_components.emergency_bonus
             + step_reward_components.battery_penalty
@@ -223,6 +229,11 @@ class DroneTrafficEnv:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    def _get_manhattan_dist(self, z1: str, z2: str) -> int:
+        r1, r2 = ord(z1[0]) - ord("A"), ord(z2[0]) - ord("A")
+        c1, c2 = int(z1[1:]) - 1, int(z2[1:]) - 1
+        return abs(r1 - r2) + abs(c1 - c2)
 
     def _build_observation(self) -> Observation:
         congestion: Dict[str, int] = defaultdict(int)

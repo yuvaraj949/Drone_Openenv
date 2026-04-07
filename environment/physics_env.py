@@ -17,6 +17,7 @@ from .models import (
     Observation,
     Reward,
     RewardDetails,
+    Obstacle,
 )
 from .tasks import get_task_config
 from .drone_env import DroneTrafficEnv
@@ -45,6 +46,13 @@ class PhysicsDroneEnv(DroneTrafficEnv):
         self.max_x = self.cfg["cols"] - 1
         self.max_y = self.cfg["rows"] - 1
         self.max_z = self.cfg.get("max_altitude", 20.0)
+        
+        # Radius-limited sensing
+        self.sensing_radius = 10.0
+        self.stationary_obstacles = [
+            Obstacle(id="TowerA", x=1.5, y=1.5, z=5.0, radius=1.0),
+            Obstacle(id="TowerB", x=3.5, y=3.5, z=5.0, radius=1.0)
+        ]
 
     def reset(self) -> Observation:
         obs = super().reset()
@@ -113,6 +121,9 @@ class PhysicsDroneEnv(DroneTrafficEnv):
             thrust_mag = np.linalg.norm(thrust)
             drain = (thrust_mag / self.max_thrust) * self.battery_drain * 2.0
             d.battery = max(0, d.battery - drain)
+            
+            # Energy Penalty (to encourage efficiency)
+            step_reward_components.energy_penalty -= (thrust_mag / self.max_thrust) * 0.5
 
             if d.location == d.destination and d.altitude < 1.0:
                 d.delivered = True
@@ -138,7 +149,8 @@ class PhysicsDroneEnv(DroneTrafficEnv):
         total_reward = sum([
             step_reward_components.deliveries,
             step_reward_components.collision_penalty,
-            step_reward_components.step_penalty
+            step_reward_components.step_penalty,
+            step_reward_components.energy_penalty
         ])
         
         self._episode_rewards.append(total_reward)
@@ -162,4 +174,6 @@ class PhysicsDroneEnv(DroneTrafficEnv):
     def _build_observation(self) -> Observation:
         obs = super()._build_observation()
         obs.wind_vector = self.current_wind.tolist()
+        obs.sensing_radius = self.sensing_radius
+        obs.stationary_obstacles = self.stationary_obstacles
         return obs

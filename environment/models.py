@@ -41,6 +41,14 @@ class DroneState(BaseModel):
         default=0, description="Number of steps this drone has already moved"
     )
 
+class Obstacle(BaseModel):
+    """Stationary or dynamic obstacle in the 3D airspace."""
+    id: str
+    x: float
+    y: float
+    z: float
+    radius: float
+
 
 class DroneAction(BaseModel):
     """Routing command for a single drone."""
@@ -82,6 +90,12 @@ class Observation(BaseModel):
     )
     collisions: int = Field(
         default=0, description="Cumulative collision count for this episode"
+    )
+    sensing_radius: float = Field(
+        default=10.0, description="Max distance drones can sense each other (meters)"
+    )
+    stationary_obstacles: List[Obstacle] = Field(
+        default_factory=list, description="Obstacles in the 3D airspace"
     )
     graph_edges: Dict[str, List[str]] = Field(
         default_factory=dict,
@@ -133,6 +147,8 @@ class RewardDetails(BaseModel):
 
     deliveries: float = Field(default=0.0, description="+1 per drone delivered this step")
     step_penalty: float = Field(default=0.0, description="-0.5 applied each step to encourage speed")
+    distance_reward: float = Field(default=0.0, description="Reward for moving closer to destination")
+    energy_penalty: float = Field(default=0.0, description="Penalty for high thrust magnitude")
     collision_penalty: float = Field(default=0.0, description="-2 per collision detected this step")
     emergency_bonus: float = Field(default=0.0, description="+1 per emergency drone delivered on-time")
     battery_penalty: float = Field(default=0.0, description="-0.1 per drone with battery < 10 %")

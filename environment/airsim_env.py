@@ -32,6 +32,7 @@ from .models import (
     Observation,
     Reward,
     RewardDetails,
+    Obstacle,
 )
 from .drone_env import DroneTrafficEnv
 
@@ -140,10 +141,22 @@ class AirSimDroneEnv(DroneTrafficEnv):
                 self.client.armDisarm(False, vehicle_name=v_name)
                 continue
 
-            # Check if an in-progress land command has finished
             state = self.client.getMultirotorState(vehicle_name=v_name)
+            pos = state.kinematics_estimated.position
+            vel = state.kinematics_estimated.linear_velocity
+            
+            # 0. Energy Penalty (Proportional to velocity/thrust)
+            v_mag = np.linalg.norm([vel.x_val, vel.y_val, vel.z_val])
+            energy_penalty = - (v_mag / 15.0) * 0.1 # Penalty for constant high speed
+            
             if state.landed_state == 1 and a.drone_id in self.landing_drones:
                 self.delivered_drones.add(a.drone_id)
+                continue
+
+            if a.thrust_vector and any(v != 0 for v in a.thrust_vector):
+                # RL Training/Inference mode: Use raw thrust/velocity vector
+                vx, vy, vz = a.thrust_vector
+                self.client.moveByVelocityAsync(vx, vy, vz, duration=1.0, vehicle_name=v_name)
                 continue
 
             target_grid = a.move_to 
@@ -239,10 +252,15 @@ class AirSimDroneEnv(DroneTrafficEnv):
                 prev_d = next((pd for pd in self.prev_obs.drones if pd.id == d.id), None)
                 if prev_d:
                     prev_dist = np.sqrt((prev_d.x - target_x)**2 + (prev_d.y - target_y)**2)
-                    total_step_reward += (prev_dist - dist) * 0.1
+                    # Stronger distance gradient (1.0 vs 0.1)
+                    total_step_reward += (prev_dist - dist) * 1.0
 
         if step_collisions > 0:
-            total_step_reward -= 5.0 # Heavy collision penalty
+            total_step_reward -= 20.0 # Extreme collision penalty for "Perfection"
+        
+        total_step_reward += sum(d.battery_penalty for d in obs.drones if hasattr(d, 'battery_penalty')) # (Optional)
+        # Using a shared penalty from v_mag across all drones for city-level efficiency
+        total_step_reward += energy_penalty if 'energy_penalty' in locals() else 0
         
         self.prev_obs = obs
         self.drones_state = obs.drones
@@ -294,7 +312,13 @@ class AirSimDroneEnv(DroneTrafficEnv):
             drones=drones_state,
             congestion_map={},
             graph_edges={},
-            wind_vector=[0, 0, 0]
+            wind_vector=[0, 0, 0],
+            sensing_radius=10.0,
+            stationary_obstacles=[
+                # Placeholder AirSim obstacles (can be dynamically mapped from UE4)
+                Obstacle(id="AirSimTower1", x=10.0, y=10.0, z=-25.0, radius=2.0),
+                Obstacle(id="AirSimTower2", x=-20.0, y=-20.0, z=-25.0, radius=2.0)
+            ]
         )
 
     def state(self) -> Dict[str, Any]:

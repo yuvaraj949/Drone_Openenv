@@ -22,6 +22,7 @@ import time
 from environment.drone_env import DroneTrafficEnv
 from rl_agent.dqn_agent import DDQNAgent
 from visualizer.terminal_vis import TerminalRenderer
+from visualizer.grid_vis import GridAnimator
 
 
 def read_config(path: str) -> dict:
@@ -29,7 +30,7 @@ def read_config(path: str) -> dict:
     parser.read(path)
     return {section: dict(parser.items(section)) for section in parser.sections()}
 
-def test_agent(model_path: str, use_rich: bool = True):
+def test_agent(model_path: str, use_rich: bool = True, use_visualize: bool = False, gif_path: str = "rl_episode.gif"):
     cfg = read_config("rl_agent/config.ini")
     gen_cfg = cfg['general']
     
@@ -39,7 +40,7 @@ def test_agent(model_path: str, use_rich: bool = True):
     zone_names = list(env.cfg["graph"].keys())
     
     # Init agent
-    agent = DDQNAgent(cfg, len(zone_names), zone_names)
+    agent = DDQNAgent(cfg, len(zone_names), zone_names, graph=env.graph, task_cfg=env.cfg)
     
     if os.path.exists(model_path):
         agent.load(model_path)
@@ -53,10 +54,17 @@ def test_agent(model_path: str, use_rich: bool = True):
         task_name=env.task_name
     ) if use_rich else None
     
+    animator = GridAnimator(
+        rows=env.cfg["rows"],
+        cols=env.cfg["cols"],
+        task_name=env.task_name
+    ) if use_visualize else None
+    
     print(f"\n--- Testing DDQN Agent on task: {task} ---")
     
     obs = env.reset()
     if renderer: renderer.render(obs, reward=None, info={})
+    if animator: animator.capture(obs)
     
     done = False
     total_reward = 0.0
@@ -66,7 +74,7 @@ def test_agent(model_path: str, use_rich: bool = True):
         agent.epsilon = 0.0
         
         # Get action from model
-        action = agent.select_action(obs, training=False)
+        action = agent.select_action(obs, training=False, step=info.get('step', 0) if 'info' in locals() else 0)
         
         # Step env
         obs, reward, done, info = env.step(action)
@@ -76,16 +84,25 @@ def test_agent(model_path: str, use_rich: bool = True):
             time.sleep(0.5) # slow down for watching
             renderer.render(obs, reward=reward, info=info)
             
+        if animator:
+            animator.capture(obs, blocked_zones=info.get("blocked_zones", []))
+            
     print("\n[Testing Complete]")
     print(f"Total Reward: {total_reward:+.2f}")
     print(f"Collisions: {info['cumulative_collisions']}")
     print(f"Delivered: {info['delivered']} / {len(obs.drones)}")
+    
+    if animator:
+        saved = animator.save(gif_path)
+        print(f"[VIS] Animation saved to {saved}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test trained DDQN Agent")
     parser.add_argument("--model", type=str, default="models/ddqn/ddqn_final.pt", help="Path to checkpoint")
     parser.add_argument("--no-rich", action="store_true", help="Disable rich terminal rendering")
+    parser.add_argument("--visualize", action="store_true", help="Generate animated GIF of the episode")
+    parser.add_argument("--gif-path", type=str, default="rl_episode.gif", help="Path to save the GIF")
     args = parser.parse_args()
     
-    test_agent(args.model, not args.no_rich)
+    test_agent(args.model, not args.no_rich, args.visualize, args.gif_path)
