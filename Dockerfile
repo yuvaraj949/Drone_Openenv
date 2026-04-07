@@ -7,7 +7,7 @@ LABEL version="1.0"
 
 # ── System deps ───────────────────────────────────────────────────────────
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc && \
+    apt-get install -y --no-install-recommends gcc curl && \
     rm -rf /var/lib/apt/lists/*
 
 # ── Working directory ─────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ ENV MPLBACKEND=Agg
 
 # ── Healthcheck ───────────────────────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD python -c "from environment.drone_env import DroneTrafficEnv; DroneTrafficEnv('easy').reset(); print('ok')" || exit 1
+  CMD curl -f http://localhost:7860/health || exit 1
 
 # ── Ports ────────────────────────────────────────────────────────────────
 # OpenEnv Server
