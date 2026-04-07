@@ -1,0 +1,122 @@
+"""
+Grader logic for the Drone Traffic Control environment.
+
+The grader receives a completed episode state and produces a normalized
+score in [0.0, 1.0] that hackathon judges can use for leaderboard ranking.
+
+Score formula (weighted):
+  delivery_rate    → 0.50 weight  (fraction of drones that reached destination)
+  collision_score  → 0.25 weight  (penalises collisions relative to fleet size)
+  emergency_score  → 0.15 weight  (bonus for on-time emergency deliveries)
+  efficiency_score → 0.10 weight  (fewer steps used = higher score)
+"""
+
+from __future__ import annotations
+from typing import Any, Dict, List, Optional
+
+
+# ---------------------------------------------------------------------------
+# Public grading surface
+# ---------------------------------------------------------------------------
+
+def grade_task(
+    env_state: Dict[str, Any],
+    task_config: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Compute a normalised score [0.0, 1.0] from a completed episode state.
+
+    Parameters
+    ----------
+    env_state : dict
+        Must contain at minimum:
+          - "drones"    : list of drone dicts with "location", "destination",
+                          "priority", "delivered", "steps_taken"
+          - "collisions": int, cumulative collision count
+          - "step"      : int, total steps elapsed
+    task_config : dict, optional
+        Task config dict from tasks.get_task_config(). Used to read
+        "max_steps" and "emergency_deadline" for efficiency scoring.
+
+    Returns
+    -------
+    float
+        Final hackathon score for this episode.
+    """
+    drones: List[Dict[str, Any]] = env_state.get("drones", [])
+    total_drones = len(drones)
+    if total_drones == 0:
+        return {
+            "score": 0.0,
+            "delivered": 0,
+            "collisions": 0,
+            "delivery_rate": 0.0,
+            "emergency_score": 0.0,
+            "efficiency_score": 0.0,
+        }
+
+    collisions: int = int(env_state.get("collisions", 0))
+    step: int = int(env_state.get("step", 1))
+
+    # ---- 1. Delivery rate (50 %) ----------------------------------------
+    delivered = sum(
+        1 for d in drones
+        if d.get("delivered") or d.get("location") == d.get("destination")
+    )
+    delivery_rate = delivered / total_drones
+
+    # ---- 2. Collision score (25 %) ----------------------------------------
+    # Zero collisions → 1.0; each collision reduces score proportionally.
+    max_collisions = total_drones  # theoretical worst case
+    collision_score = max(0.0, 1.0 - collisions / max(max_collisions, 1))
+
+    # ---- 3. Emergency on-time score (15 %) --------------------------------
+    emergency_drones = [d for d in drones if d.get("priority", 1) == 2]
+    if emergency_drones:
+        deadline = (task_config or {}).get("emergency_deadline", 25)
+        on_time = sum(
+            1 for d in emergency_drones
+            if (d.get("delivered") or d.get("location") == d.get("destination"))
+            and d.get("steps_taken", step) <= deadline
+        )
+        emergency_score = on_time / len(emergency_drones)
+    else:
+        emergency_score = 1.0  # no emergencies — full marks by default
+
+    # ---- 4. Efficiency score (10 %) ----------------------------------------
+    max_steps = (task_config or {}).get("max_steps", 50)
+    efficiency_score = max(0.0, 1.0 - (step / max_steps))
+
+    # ---- Weighted sum -------------------------------------------------------
+    score = (
+        0.50 * delivery_rate
+        + 0.25 * collision_score
+        + 0.15 * emergency_score
+        + 0.10 * efficiency_score
+    )
+
+    return {
+        "score": round(min(max(score, 0.0), 1.0), 4),
+        "delivered": delivered,
+        "collisions": collisions,
+        "delivery_rate": round(delivery_rate, 4),
+        "emergency_score": round(emergency_score, 4),
+        "efficiency_score": round(efficiency_score, 4),
+    }
+
+
+def grade_episode_log(episode_rewards: List[float]) -> Dict[str, float]:
+    """
+    Summarise a full list of per-step rewards gathered during an episode.
+
+    Returns a dict suitable for logging / leaderboard submission.
+    """
+    if not episode_rewards:
+        return {"total_reward": 0.0, "mean_reward": 0.0, "min_reward": 0.0, "max_reward": 0.0}
+
+    return {
+        "total_reward": round(sum(episode_rewards), 4),
+        "mean_reward": round(sum(episode_rewards) / len(episode_rewards), 4),
+        "min_reward": round(min(episode_rewards), 4),
+        "max_reward": round(max(episode_rewards), 4),
+    }
