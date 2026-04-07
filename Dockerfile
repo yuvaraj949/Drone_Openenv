@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # ── Metadata ──────────────────────────────────────────────────────────────
 LABEL maintainer="drone-traffic-control"
 LABEL description="Autonomous Drone Traffic Control — OpenEnv Environment"
-LABEL version="0.2"
+LABEL version="1.0"
 
 # ── System deps ───────────────────────────────────────────────────────────
 RUN apt-get update && \
@@ -13,13 +13,12 @@ RUN apt-get update && \
 # ── Working directory ─────────────────────────────────────────────────────
 WORKDIR /app
 
+# ── Copy round1_submission directory ───────────────────────────────────────
+COPY round1_submission/ .
+
 # ── Python dependencies (cached layer) ───────────────────────────────────
-COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
-
-# ── Copy source ───────────────────────────────────────────────────────────
-COPY . .
 
 # ── Environment variables ─────────────────────────────────────────────────
 ENV PYTHONUNBUFFERED=1
@@ -29,14 +28,14 @@ ENV MPLBACKEND=Agg
 
 # ── Healthcheck ───────────────────────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD python -c "import sys; sys.path.insert(0, '/app'); from round1_submission.environment.drone_env import DroneTrafficEnv; DroneTrafficEnv('easy').reset(); print('ok')" || exit 1
+  CMD python -c "from environment.drone_env import DroneTrafficEnv; DroneTrafficEnv('easy').reset(); print('ok')" || exit 1
 
 # ── Ports ────────────────────────────────────────────────────────────────
-# Gradio UI
+# OpenEnv Server
 EXPOSE 7860
 
 # ── Entry point ───────────────────────────────────────────────────────────
-# Default: launch Gradio UI
-# Override for CLI: docker run drone-traffic python inference.py --task hard --seed 7
+# Default: launch OpenEnv server
 ENTRYPOINT ["python"]
-CMD ["app.py"]
+CMD ["-m", "server.app"]
+

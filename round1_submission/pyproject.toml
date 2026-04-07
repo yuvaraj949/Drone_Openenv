@@ -7,7 +7,7 @@ name = "drone-traffic-control"
 version = "1.0.0"
 description = "Autonomous Drone Dispatcher 3D — OpenEnv Environment"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
@@ -30,6 +30,9 @@ dev = [
 
 [tool.setuptools]
 packages = ["environment"]
+
+[project.scripts]
+server = "server.app:main"
 
 [tool.black]
 line-length = 100
