@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Traffic Control | Autonomous Systems</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/png" href="/static/hero.png">
+</head>
+<body>
+    <div class="background-gradient"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">DroneTrafficControl</div>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span>System Online</span>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Autonomous Drone Traffic Monitoring</h1>
+                <p>A high-fidelity simulation environment for testing and training autonomous drone dispatchers at scale. Designed for low-latency, high-precision control in dense urban airspace.</p>
+                <div class="actions">
+                    <a href="#demo" class="cta-button">Launch Live Mission</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="/static/hero.png" alt="Futuristic Drone Fleet">
+            </div>
+        </section>
+
+        <!-- LIVE MISSION DEMO SECTION -->
+        <section id="demo" class="glass-card mission-section">
+            <div class="mission-header">
+                <h2>Live Autonomous Mission</h2>
+                <p>Execute an episode using the pre-trained <strong>DDQN-v1</strong> agent in the 3D-lite environment.</p>
+                <br>
+                <button id="launchBtn" class="cta-button" onclick="runMission()">🚀 Launch Autonomous Mission</button>
+            </div>
+
+            <div id="missionStatus" class="mission-status hidden">
+                <div class="progress-container">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+                <div class="telemetry-grid">
+                    <div class="telemetry-card">
+                        <span class="label">Step</span>
+                        <span id="stepDisplay" class="value">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="label">Reward</span>
+                        <span id="rewardDisplay" class="value">0.00</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="label">Drone Actions</span>
+                        <span id="actionsDisplay" class="value">Awaiting...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="missionResults" class="mission-results hidden">
+                <h3>Mission Complete</h3>
+                <div id="successBadge" class="success-badge">SUCCESS</div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-label">Final Score</span>
+                        <span id="scoreDisplay" class="stat-value">0.000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Delivered</span>
+                        <span id="deliveredDisplay" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Collisions</span>
+                        <span id="collisionsDisplay" class="stat-value">0</span>
+                    </div>
+                </div>
+                <button class="cta-button secondary" onclick="resetMission()">Reset Mission</button>
+            </div>
+        </section>
+
+        <div class="glass-card">
+            <h2>Environment Capabilities</h2>
+            <br>
+            <div class="grid-features">
+                <div class="feature-card">
+                    <h3>Real-time Physics</h3>
+                    <p>Accurate aerodynamic modeling for multi-rotor systems in complex environmental conditions.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Dense Traffic</h3>
+                    <p>Support for swarms of up to 50 active drones with zero-collision autonomous navigation.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>OpenEnv Compliance</h3>
+                    <p>Fully compatible with the OpenEnv specification for agent-environment interaction.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <h2>Environment API Endpoints</h2>
+            <br>
+            <p>The system exposes the following endpoints for programmatic control:</p>
+            <br>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="method">POST</span></td>
+                        <td><code>/reset</code></td>
+                        <td>Resets the simulation to the initial state.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method">POST</span></td>
+                        <td><code>/step</code></td>
+                        <td>Executes an action and advances the environment.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method">POST</span></td>
+                        <td><code>/run_demo</code></td>
+                        <td>Run a full autonomous episode and return the trace.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method">GET</span></td>
+                        <td><code>/health</code></td>
+                        <td>Checks the status of the environment server.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Drone Autonomous Systems. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- MISSION LOGIC -->
+    <script>
+        let missionTrace = [];
+        let currentStep = 0;
+
+        async function runMission() {
+            const btn = document.getElementById('launchBtn');
+            const statusDiv = document.getElementById('missionStatus');
+            const resultsDiv = document.getElementById('missionResults');
+            
+            btn.disabled = true;
+            btn.innerText = '🛰️ Computing Trajectories...';
+            resultsDiv.classList.add('hidden');
+            statusDiv.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/run_demo', { method: 'POST' });
+                const data = await response.json();
+                
+                missionTrace = data.trace;
+                playback(data);
+            } catch (error) {
+                console.error("Mission failed:", error);
+                btn.innerText = '❌ Mission Error';
+                btn.disabled = false;
+            }
+        }
+
+        function playback(fullData) {
+            currentStep = 0;
+            const bar = document.getElementById('progressBar');
+            const stepTxt = document.getElementById('stepDisplay');
+            const rewardTxt = document.getElementById('rewardDisplay');
+            const actionsTxt = document.getElementById('actionsDisplay');
+
+            const interval = setInterval(() => {
+                if (currentStep >= missionTrace.length) {
+                    clearInterval(interval);
+                    showResults(fullData);
+                    return;
+                }
+
+                const stepData = missionTrace[currentStep];
+                const progress = ((currentStep + 1) / missionTrace.length) * 100;
+                
+                bar.style.width = progress + '%';
+                stepTxt.innerText = stepData.step;
+                rewardTxt.innerText = stepData.reward.toFixed(2);
+                actionsTxt.innerText = stepData.actions.join(', ');
+
+                currentStep++;
+            }, 300); // 300ms playback delay
+        }
+
+        function showResults(data) {
+            const resultsDiv = document.getElementById('missionResults');
+            const badge = document.getElementById('successBadge');
+            
+            document.getElementById('scoreDisplay').innerText = data.score.toFixed(3);
+            document.getElementById('deliveredDisplay').innerText = data.metrics.delivered;
+            document.getElementById('collisionsDisplay').innerText = data.metrics.collisions;
+
+            badge.innerText = data.success ? 'SUCCESS' : 'MISSION FAILED';
+            badge.style.backgroundColor = data.success ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+            badge.style.color = data.success ? '#10b981' : '#ef4444';
+            badge.style.borderColor = data.success ? '#10b981' : '#ef4444';
+
+            resultsDiv.classList.remove('hidden');
+            document.getElementById('launchBtn').innerText = '🚀 Launch Mission';
+            document.getElementById('launchBtn').disabled = false;
+        }
+
+        function resetMission() {
+            document.getElementById('missionStatus').classList.add('hidden');
+            document.getElementById('missionResults').classList.add('hidden');
+            document.getElementById('progressBar').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
