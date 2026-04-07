@@ -1,26 +1,122 @@
+"""
+OpenEnv Server - Drone Traffic Control
+For HuggingFace Spaces Deployment
+"""
+
 from __future__ import annotations
 import os
+import sys
 
-# Silencing TensorFlow warnings (oneDNN, CPU instructions, etc.)
+# Add round1_submission to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'round1_submission'))
+
+# Silencing TensorFlow warnings
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-import tempfile
-import time
-from typing import Any, Dict, Generator, List, Tuple, Optional
-
-import numpy as np
-import gradio as gr
+import asyncio
+from typing import Optional, Dict, Any
+from fastapi import FastAPI, HTTPException
+import uvicorn
 
 from environment.drone_env import DroneTrafficEnv
-from environment.graders import grade_task
-from environment.models import Action, DroneAction, HOVER, Observation
-from collections import deque
-from rl_agent.dqn_agent import DDQNAgent
-import torch
-import configparser
+from environment.models import Action, Observation, Reward
 
+# Global environment instance
+_env: Optional[DroneTrafficEnv] = None
+_task: str = "easy"
+
+
+def get_env() -> DroneTrafficEnv:
+    """Get or create the global environment instance."""
+    global _env
+    if _env is None:
+        _env = DroneTrafficEnv(task=_task)
+    return _env
+
+
+# Create FastAPI app for HF Spaces
+app = FastAPI(
+    title="Drone Traffic Control — OpenEnv",
+    description="Autonomous drone dispatcher environment",
+    version="1.0.0",
+)
+
+
+@app.on_event("startup")
+async def startup():
+    """Initialize environment on server startup."""
+    global _env
+    _task_env = os.getenv("TASK", "easy")
+    _env = DroneTrafficEnv(task=_task_env)
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    """Clean up environment on shutdown."""
+    global _env
+    if _env is not None:
+        await _env.close() if hasattr(_env, "close") else None
+
+
+@app.post("/reset")
+async def reset(task: Optional[str] = None) -> Dict[str, Any]:
+    """Reset the environment and return the initial observation."""
+    global _env, _task
+    if task:
+        _task = task
+        _env = DroneTrafficEnv(task=task)
+    env = get_env()
+    obs = env.reset()
+    return {"observation": obs.model_dump()}
+
+
+@app.post("/step")
+async def step(action: Dict[str, Any]) -> Dict[str, Any]:
+    """Step the environment with the given action."""
+    env = get_env()
+    try:
+        action_obj = Action(**action)
+        obs, reward_obj, done, info = env.step(action_obj)
+        return {
+            "observation": obs.model_dump(),
+            "reward": reward_obj.model_dump(),
+            "done": done,
+            "info": info,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/state")
+async def state() -> Dict[str, Any]:
+    """Get the current environment state for grading."""
+    env = get_env()
+    state_dict = env.state()
+    return {"state": state_dict}
+
+
+@app.get("/health")
+async def health() -> Dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "ok"}
+
+
+def main():
+    """Main entry point for running the server."""
+    port = int(os.getenv("PORT", 7860))
+    host = os.getenv("HOST", "0.0.0.0")
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level="info",
+    )
+
+
+# Legacy code for backward compatibility
 def read_config(path: str) -> dict:
+    import configparser
     parser = configparser.ConfigParser()
     parser.read(path)
     return {section: dict(parser.items(section)) for section in parser.sections()}
