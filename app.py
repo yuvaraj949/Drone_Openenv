@@ -102,6 +102,240 @@ async def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/")
+async def landing_page():
+    """Landing page with API documentation."""
+    from fastapi.responses import HTMLResponse
+
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Drone Traffic Control — OpenEnv</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                max-width: 800px;
+                padding: 60px 40px;
+                text-align: center;
+            }
+            h1 {
+                font-size: 2.5em;
+                color: #333;
+                margin-bottom: 10px;
+            }
+            .subtitle {
+                font-size: 1.2em;
+                color: #666;
+                margin-bottom: 30px;
+            }
+            .icon {
+                font-size: 4em;
+                margin-bottom: 20px;
+            }
+            .description {
+                color: #555;
+                line-height: 1.8;
+                margin-bottom: 40px;
+                font-size: 1.1em;
+            }
+            .endpoints {
+                background: #f5f5f5;
+                border-radius: 8px;
+                padding: 25px;
+                margin-bottom: 30px;
+                text-align: left;
+            }
+            .endpoints h2 {
+                color: #333;
+                margin-bottom: 15px;
+                font-size: 1.3em;
+            }
+            .endpoint {
+                margin: 12px 0;
+                padding: 10px;
+                background: white;
+                border-left: 4px solid #667eea;
+            }
+            .method {
+                display: inline-block;
+                font-weight: bold;
+                color: white;
+                background: #667eea;
+                padding: 4px 8px;
+                border-radius: 4px;
+                margin-right: 8px;
+                min-width: 50px;
+                text-align: center;
+            }
+            .method.post { background: #48bb78; }
+            .method.get { background: #4299e1; }
+            .path {
+                font-family: 'Courier New', monospace;
+                color: #333;
+                font-weight: 500;
+            }
+            .description-small {
+                color: #666;
+                font-size: 0.9em;
+                margin-left: 65px;
+                margin-top: 4px;
+            }
+            .buttons {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .button {
+                padding: 12px 24px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                border: none;
+                cursor: pointer;
+                font-size: 1em;
+            }
+            .button.primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            .button.primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+            .button.secondary {
+                background: #f5f5f5;
+                color: #333;
+                border: 2px solid #ddd;
+            }
+            .button.secondary:hover {
+                border-color: #667eea;
+                color: #667eea;
+            }
+            .features {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            .feature {
+                background: #f9f9f9;
+                padding: 20px;
+                border-radius: 8px;
+                border: 1px solid #eee;
+            }
+            .feature-icon {
+                font-size: 2em;
+                margin-bottom: 10px;
+            }
+            .feature-title {
+                font-weight: 600;
+                color: #333;
+                margin-bottom: 5px;
+            }
+            .feature-desc {
+                color: #666;
+                font-size: 0.9em;
+            }
+            .footer {
+                color: #999;
+                font-size: 0.9em;
+                margin-top: 30px;
+                border-top: 1px solid #eee;
+                padding-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="icon">🚁</div>
+            <h1>Drone Traffic Control</h1>
+            <p class="subtitle">OpenEnv Submission — Autonomous Drone Coordination</p>
+
+            <p class="description">
+                A reinforcement learning environment for managing autonomous drone fleets.
+                Navigate delivery drones through congested airspace while avoiding collisions,
+                respecting bottlenecks, and prioritizing emergency deliveries.
+            </p>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">3 Difficulty Levels</div>
+                    <div class="feature-desc">Easy (3×3), Medium (4×4), Hard (5×5)</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">RL-Ready</div>
+                    <div class="feature-desc">DDQN, PPO agents included</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Real-time API</div>
+                    <div class="feature-desc">Fast inference &lt;5min per episode</div>
+                </div>
+            </div>
+
+            <div class="endpoints">
+                <h2>📡 API Endpoints</h2>
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <span class="path">/reset?task=easy|medium|hard</span>
+                    <div class="description-small">Initialize environment and get initial observation</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <span class="path">/step</span>
+                    <div class="description-small">Execute action and get next state, reward, done flag</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <span class="path">/state</span>
+                    <div class="description-small">Get current environment state for grading</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <span class="path">/health</span>
+                    <div class="description-small">Health check endpoint</div>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <span class="path">/docs</span>
+                    <div class="description-small">Interactive API documentation (Swagger UI)</div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <a href="/docs" class="button primary">📚 API Documentation</a>
+                <a href="https://github.com/yuvaraj949/drone-traffic-control" class="button secondary">💻 GitHub</a>
+            </div>
+
+            <div class="footer">
+                OpenEnv Submission • Hugging Face Spaces
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+
 def main():
     """Main entry point for running the server."""
     port = int(os.getenv("PORT", 7860))

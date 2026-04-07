@@ -1,6 +1,20 @@
+---
+title: Drone Airspace 3D
+emoji: 🛸
+colorFrom: indigo
+colorTo: indigo
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # Autonomous Drone Dispatcher 3D — OpenEnv
 
+*Interactive system documentation and mission gallery are now available directly within the Graduate dashboard.*
+
+
 A high-fidelity logistics simulation environment for autonomous drone coordination and traffic management in 3D airspace.
+
 
 ## Overview
 
