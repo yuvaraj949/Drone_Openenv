@@ -16,13 +16,12 @@ from environment.models import Action, DroneAction, HOVER
 from environment.graders import grade_task
 from environment.tasks import get_config
 
-# Environment variables (provided by HF Space/Evaluation hardware)
+import argparse
+
+# Default settings (can be overridden by CLI or Environment variables)
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-TASK_NAME = os.getenv("TASK", "easy")
-
-MAX_STEPS = get_config(TASK_NAME)["max_steps"]
 TEMPERATURE = 0.0
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -41,8 +40,16 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 async def main() -> None:
+    parser = argparse.ArgumentParser(description="OpenEnv Baseline Inference")
+    parser.add_argument("--task", type=str, default=os.getenv("TASK", "easy"), help="Task name (easy, medium, hard)")
+    args = parser.parse_args()
+    
+    task_name = args.task
+    cfg = get_config(task_name)
+    max_steps = cfg["max_steps"]
+
     # Initialize Environment
-    env = DroneDispatchEnv(task=TASK_NAME)
+    env = DroneDispatchEnv(task=task_name)
     
     # Initialize Agent (OpenAI Client)
     if not API_KEY:
@@ -56,12 +63,12 @@ async def main() -> None:
     score = 0.0
     success = False
 
-    log_start(task=TASK_NAME, env="drone_dispatch", model=MODEL_NAME)
+    log_start(task=task_name, env="drone_dispatch", model=MODEL_NAME)
 
     try:
         obs = await env.reset()
         
-        for step_idx in range(1, MAX_STEPS + 1):
+        for step_idx in range(1, max_steps + 1):
             # Logic: Determine next moves for all drones
             # In a real submission, we'd prompt the LLM here.
             # For the baseline, we'll use a Greedy BFS strategy.
