@@ -9,7 +9,7 @@ import io
 import json
 import tempfile
 import time
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Dict, Generator, List, Tuple, Optional
 
 import numpy as np
 import gradio as gr
@@ -18,7 +18,7 @@ from environment.drone_env import DroneTrafficEnv
 from environment.graders import grade_episode_log, grade_task
 from environment.models import Action, DroneAction, DroneState, HOVER, Observation
 from collections import deque, defaultdict
-import torch
+import torch # pyright: ignore[reportMissingImports]
 from rl_agent.dqn_agent import DDQNAgent
 import configparser
 
