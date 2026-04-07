@@ -77,12 +77,26 @@ async def main() -> None:
             for drone in obs.drones:
                 if drone.delivered: continue
                 
-                # Simple greedy move: find neighbor closest to destination
+                # 3D Pathfinding Logic:
+                # 1. If not at destination: Cruising altitude = 10.0m + 2.0m * drone.priority
+                # 2. If at destination: Target altitude = 0.0m (Landing)
+                
+                target_alt = 10.0 + (int(drone.id[1:]) % 5) * 2.0  # Distributed cruising altitudes to avoid collisions
+                if drone.location == drone.destination:
+                    target_alt = 0.0
+                
+                # Altitude control (climb/descend by 5.0m per step)
+                climb = 0.0
+                if drone.altitude < target_alt:
+                    climb = min(5.0, target_alt - drone.altitude)
+                elif drone.altitude > target_alt:
+                    climb = max(-5.0, target_alt - drone.altitude)
+
+                # Horizontal move (Greedy BFS)
                 neighbors = obs.graph.get(drone.location, [])
                 best_move = drone.location
                 min_dist = 999
                 
-                # Manhattan distance helper
                 def dist(z1, z2):
                     return abs(ord(z1[0]) - ord(z2[0])) + abs(int(z1[1:]) - int(z2[1:]))
 
@@ -92,7 +106,7 @@ async def main() -> None:
                         min_dist = d
                         best_move = n
                 
-                drone_actions.append(DroneAction(drone_id=drone.id, move_to=best_move))
+                drone_actions.append(DroneAction(drone_id=drone.id, move_to=best_move, climb=climb))
 
             action = Action(actions=drone_actions)
             

@@ -1,6 +1,6 @@
 """
 DroneDispatchEnv — Core OpenEnv simulation logic.
-Manages drone status, movement validation, battery, and collisions.
+Manages drone status, movement validation, battery, and collisions in a 3D-lite airspace.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from .tasks import get_config
 
 class DroneDispatchEnv:
     """
-    OpenEnv-compliant environment for Autonomous Drone Dispatching.
+    OpenEnv-compliant environment for Autonomous Drone Dispatching (3D-lite).
     """
 
     def __init__(self, task: str = "easy", seed: Optional[int] = None) -> None:
@@ -35,6 +35,12 @@ class DroneDispatchEnv:
         self.dynamic_nfz = self.cfg.get("dynamic_nfz", [])
         self.deadline = self.cfg["deadline"]
         
+        # 3D-lite Constants
+        self.safe_alt_margin = 2.0  # meters
+        self.delivery_alt_threshold = 1.0  # meters
+        self.climb_penalty_factor = 1.5
+        self.descent_bonus_factor = 0.8
+        
         self._rng = random.Random(seed)
         self._drones: List[DroneState] = []
         self._step: int = 0
@@ -42,7 +48,7 @@ class DroneDispatchEnv:
         self._total_deliv: int = 0
 
     async def reset(self) -> Observation:
-        """Initialize fresh episode."""
+        """Initialize fresh episode with drones at ground level."""
         self._step = 0
         self._collisions = 0
         self._total_deliv = 0
@@ -63,7 +69,7 @@ class DroneDispatchEnv:
             DroneState(
                 id=f"D{i+1}",
                 location=locs[i],
-                altitude=self._rng.uniform(10.0, 30.0),
+                altitude=0.0,  # All start at ground level
                 destination=dests[i],
                 battery=100.0,
                 priority=priorities[i],
@@ -94,47 +100,55 @@ class DroneDispatchEnv:
             # Validation
             old_dist = self._manhattan(drone.location, drone.destination)
             
-            # Constraints
-            if req_zone in self.graph.get(drone.location, []) or req_zone == drone.location:
-                if req_zone not in nfz and drone.battery > 0:
-                    drone.location = req_zone
+            # Constraints: must be adjacent or hover, not in NFZ, and have battery
+            if (req_zone in self.graph.get(drone.location, []) or req_zone == drone.location) \
+               and req_zone not in nfz and drone.battery > 0:
+                drone.location = req_zone
             
             drone.altitude = max(0.0, drone.altitude + climb)
             drone.steps_taken += 1
             
-            # Energy
-            drain = self.energy_drain * (1.5 if climb > 0 else (0.8 if climb < 0 else 1.0))
+            # Energy: affected by climbing/descending
+            drain_multiplier = 1.0
+            if climb > 0:
+                drain_multiplier = self.climb_penalty_factor
+            elif climb < 0:
+                drain_multiplier = self.descent_bonus_factor
+                
+            drain = self.energy_drain * drain_multiplier
             drone.battery = max(0.0, drone.battery - drain)
             
             # Rewards
             new_dist = self._manhattan(drone.location, drone.destination)
             step_details.progress_reward += (old_dist - new_dist) * 0.1
             
-            if drone.location == drone.destination:
+            # Delivery Check: must be at destination HUB AND at delivery altitude (landing)
+            if drone.location == drone.destination and drone.altitude < self.delivery_alt_threshold:
                 drone.delivered = True
                 self._total_deliv += 1
-                step_details.delivery_bonus += 1.0
+                step_details.delivery_bonus += 2.0  # Increased reward for successful landing
                 if drone.priority == 2 and drone.steps_taken <= self.deadline:
-                    step_details.delivery_bonus += 0.5
+                    step_details.delivery_bonus += 1.0  # Emergency bonus
             
             if drone.battery < 10.0:
-                step_details.energy_penalty -= 0.05
+                step_details.energy_penalty -= 0.1
                 
             new_locs[drone.location].append(drone)
 
-        # Collisions (3D-lite: same zone + altitude diff < 2m)
+        # Collisions (3D-lite: same zone + altitude diff < safe_alt_margin)
         step_colls = 0
         for zone, ds in new_locs.items():
             if len(ds) < 2: continue
-            # Check pairwise altitude
+            # Check pairwise altitude proximity
             for i in range(len(ds)):
                 for j in range(i+1, len(ds)):
-                    if abs(ds[i].altitude - ds[j].altitude) < 2.0:
+                    # A collision occurs if they are in the same zone and too close vertically
+                    if abs(ds[i].altitude - ds[j].altitude) < self.safe_alt_margin:
                         step_colls += 1
         
         self._collisions += step_colls
-        step_details.collision_penalty -= step_colls * 0.5
-        step_details.time_penalty -= 0.01
+        step_details.collision_penalty -= step_colls * 1.0  # Heavier collision penalty
+        step_details.time_penalty -= 0.02
         
         total_r = sum(step_details.model_dump().values())
         done = self._is_done()
