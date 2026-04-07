@@ -16,7 +16,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
-from rl_agent.per_memory import PrioritizedReplayMemory
+from environment.per_memory import PrioritizedReplayMemory
 from environment.models import HOVER, Action, DroneAction, Observation
 
 

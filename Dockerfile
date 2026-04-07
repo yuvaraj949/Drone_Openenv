@@ -29,7 +29,7 @@ ENV MPLBACKEND=Agg
 
 # ── Healthcheck ───────────────────────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD python -c "from environment.drone_env import DroneTrafficEnv; DroneTrafficEnv('easy').reset(); print('ok')" || exit 1
+  CMD python -c "import sys; sys.path.insert(0, '/app'); from round1_submission.environment.drone_env import DroneTrafficEnv; DroneTrafficEnv('easy').reset(); print('ok')" || exit 1
 
 # ── Ports ────────────────────────────────────────────────────────────────
 # Gradio UI
