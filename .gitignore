@@ -9,3 +9,6 @@ requirements_no_airsim.txt
 !hard_test.gif
 !medium_test.gif
 !test_output.gif
+runs/
+models/**/ddqn_chkpt*
+models/**/ppo_chkpt*

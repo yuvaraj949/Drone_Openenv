@@ -27,11 +27,12 @@ def read_config(path: str) -> dict:
     parser.read(path)
     return {section: dict(parser.items(section)) for section in parser.sections()}
 
-def train():
+def train(resume: bool = True):
     cfg = read_config("rl_agent/config.ini")
     gen_cfg = cfg['general']
+    task_name = gen_cfg['task']
     
-    env = DroneTrafficEnv(task=gen_cfg['task'], seed=int(gen_cfg['seed']))
+    env = DroneTrafficEnv(task=task_name, seed=int(gen_cfg['seed']))
     
     # Extract zones list for the agent
     zone_names = list(env.cfg["graph"].keys())
@@ -42,7 +43,13 @@ def train():
     model_dir = cfg['logging']['model_dir']
     os.makedirs(model_dir, exist_ok=True)
     
-    print(f"Starting Training: {max_episodes} episodes on task '{gen_cfg['task']}'")
+    final_model_path = os.path.join(model_dir, f"ddqn_{task_name}.pt")
+    
+    if resume and os.path.exists(final_model_path):
+        print(f"Resuming from existing model: {final_model_path}")
+        agent.load(final_model_path)
+    
+    print(f"Starting Training: {max_episodes} episodes on task '{task_name}'")
     
     for ep in range(1, max_episodes + 1):
         obs = env.reset()
@@ -75,8 +82,8 @@ def train():
             agent.save(path)
             
     # Final save
-    agent.save(os.path.join(model_dir, "ddqn_final.pt"))
-    print("Training Complete.")
+    agent.save(final_model_path)
+    print(f"Training Complete. Model saved to {final_model_path}")
 
 
 if __name__ == "__main__":

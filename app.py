@@ -68,9 +68,13 @@ _RL_AGENT_CACHE: Dict[str, DDQNAgent] = {}
 
 def _get_rl_agent(env: DroneTrafficEnv) -> Optional[DDQNAgent]:
     global _RL_AGENT_CACHE
-    model_path = "models/ddqn/ddqn_final.pt"
+    task_name = env.task
+    model_path = f"models/ddqn/ddqn_{task_name}.pt"
     if not os.path.exists(model_path):
-        return None
+        # Fallback to general name if task-specific doesn't exist yet
+        model_path = "models/ddqn/ddqn_final.pt"
+        if not os.path.exists(model_path):
+            return None
     
     # We cache based on number of zones (actions) because the agent output dimension
     # must match. If it doesn't match, we start fresh or fallback.
