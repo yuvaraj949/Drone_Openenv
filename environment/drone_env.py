@@ -20,7 +20,7 @@ import random
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
-from .models import (
+from environment.models import (
     Action,
     DroneAction,
     DroneState,
@@ -29,7 +29,7 @@ from .models import (
     Reward,
     RewardDetails,
 )
-from .tasks import get_task_config
+from environment.tasks import get_task_config
 
 
 # ---------------------------------------------------------------------------
