@@ -63,7 +63,7 @@ TASK_CONFIGS: Dict[str, dict] = {
     "easy": {
         "name": "easy",
         "description": (
-            "3-drone scenario on a 3?-3 grid with one emergency drone. "
+            "3-drone scenario on a 3x3 grid with one emergency drone. "
             "Goal: route all drones to their destinations without collision."
         ),
         "rows": 3,
@@ -75,6 +75,10 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],  # list of (step_range, zone) that become blocked
         "battery_drain_per_step": 5.0,
         "emergency_deadline": 20,   # steps within which emergency must arrive
+        "grader": {
+            "module": "environment.graders",
+            "function": "grade_task",
+        },
     },
 
     # ------------------------------------------------------------------
@@ -83,7 +87,7 @@ TASK_CONFIGS: Dict[str, dict] = {
     "medium": {
         "name": "medium",
         "description": (
-            "5-drone scenario on a 4?-4 grid with two emergency drones and "
+            "5-drone scenario on a 4x4 grid with two emergency drones and "
             "bottleneck zones (B2, C3) that can hold at most one drone. "
             "Tests congestion awareness and priority routing."
         ),
@@ -96,6 +100,10 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],
         "battery_drain_per_step": 4.0,
         "emergency_deadline": 25,
+        "grader": {
+            "module": "environment.graders",
+            "function": "grade_task",
+        },
     },
 
     # ------------------------------------------------------------------
@@ -104,11 +112,11 @@ TASK_CONFIGS: Dict[str, dict] = {
     "hard": {
         "name": "hard",
         "description": (
-            "10-drone scenario on a 10?-10 grid with three emergency drones. "
-            "Optimised for AirSim high-fidelity city transitions."
+            "10-drone scenario on a 5x5 grid with three emergency drones. "
+            "Includes dynamic obstacles and priority routing."
         ),
-        "rows": 10,
-        "cols": 10,
+        "rows": 5,
+        "cols": 5,
         "num_drones": 10,
         "num_emergencies": 3,
         "max_steps": 50,
@@ -120,6 +128,10 @@ TASK_CONFIGS: Dict[str, dict] = {
         ],
         "battery_drain_per_step": 1.0,
         "emergency_deadline": 40,
+        "grader": {
+            "module": "environment.graders",
+            "function": "grade_task",
+        },
     },
 }
 
