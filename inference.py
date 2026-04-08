@@ -140,14 +140,13 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
         grading_result = grade_task(final_state, env.cfg)
         # Defensive: ensure grading_result is always a dict
         raw_score = grading_result.get("score", 0.0) if isinstance(grading_result, dict) else float(grading_result) if grading_result else 0.0
-        # Map score to [0.01, 0.98] range as per user request
-        score = 0.01 + (raw_score * 0.97)
-        score = max(0.01, min(0.98, score))
+        # Map score to [0.01, 0.99] range as per user request
+        score = 0.01 + (raw_score * 0.98)
+        score = max(0.01, min(0.99, score))
         
         # [END] log
-        # success is true if score >= 0.5
         reward_list_str = ",".join([f"{r:.2f}" for r in rewards])
-        print(f"[END] success={str(score >= 0.5).lower()} steps={step_idx} rewards={reward_list_str}")
+        print(f"[END] success={str(score >= 0.5).lower()} steps={step_idx} score={score:.2f} rewards={reward_list_str}")
 
     return score
 
