@@ -19,20 +19,28 @@ tasks:
   - name: easy
     description: "3 drones, 3x3 grid, zero obstacles. Basic navigation check."
     max_steps: 30
-    grader: environment.graders:grade_task
+    grader:
+      module: environment.graders
+      function: grade_task
 
   - name: medium
     description: "5 drones, 4x4 grid, battery drains + bottleneck zones (restricted capacity)."
     max_steps: 40
-    grader: environment.graders:grade_task
+    grader:
+      module: environment.graders
+      function: grade_task
 
   - name: hard
     description: "10 drones, 5x5 grid, dynamic No-Fly Zones (NFZ) + emergency medical priorities."
     max_steps: 50
-    grader: environment.graders:grade_task
+    grader:
+      module: environment.graders
+      function: grade_task
 
 # Grader logic
-grader: environment.graders:grade_task
+grader:
+  module: environment.graders
+  function: grade_task
 
 # Baseline agent for scoring reproduction
 agent:
