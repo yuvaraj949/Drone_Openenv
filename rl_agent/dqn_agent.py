@@ -330,7 +330,7 @@ class DDQNAgent:
         if not os.path.exists(filepath):
             print(f"[Warn] Checkpoint {filepath} not found. Starting fresh.")
             return
-        checkpoint = torch.load(filepath, map_location=self.device)
+        checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
         try:
             self.q_net.load_state_dict(checkpoint['q_net'])
             self.target_net.load_state_dict(checkpoint['target_net'])
