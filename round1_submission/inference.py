@@ -99,7 +99,7 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
     if os.path.exists(model_path):
         agent.load(model_path)
     else:
-        print(f"[WARNING] Model not found at {model_path}, skipping load.")
+        print(f"[WARNING] Model not found at {model_path}, skipping load.", file=sys.stderr)
     
     # Get high-level strategy from OpenAI (Checklist Requirement)
     strategy = get_mission_strategy(task_name, len(obs.drones))
@@ -131,19 +131,23 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
                 done = True
 
     except Exception as e:
-        print(f"[STEP] step={step_idx} action=none reward=0.0 done=true error={str(e)}")
+        print(f"[STEP] step={step_idx} action=none reward=0.00 done=true error={str(e)}")
         done = True
-
-    # Final Grading
-    final_state = env.state()
-    grading_result = grade_task(final_state, env.cfg)
-    # Defensive: ensure grading_result is always a dict
-    score = grading_result.get("score", 0.0) if isinstance(grading_result, dict) else float(grading_result) if grading_result else 0.0
-    
-    # [END] log
-    # success is true if score >= 0.5
-    reward_list_str = ",".join([f"{r:.2f}" for r in rewards])
-    print(f"[END] success={str(score >= 0.5).lower()} steps={step_idx} rewards={reward_list_str}")
+    finally:
+        env.close()
+        # Final Grading
+        final_state = env.state()
+        grading_result = grade_task(final_state, env.cfg)
+        # Defensive: ensure grading_result is always a dict
+        raw_score = grading_result.get("score", 0.0) if isinstance(grading_result, dict) else float(grading_result) if grading_result else 0.0
+        # Map score to [0.01, 0.98] range as per user request
+        score = 0.01 + (raw_score * 0.97)
+        score = max(0.01, min(0.98, score))
+        
+        # [END] log
+        # success is true if score >= 0.5
+        reward_list_str = ",".join([f"{r:.2f}" for r in rewards])
+        print(f"[END] success={str(score >= 0.5).lower()} steps={step_idx} rewards={reward_list_str}")
 
     return score
 
