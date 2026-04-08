@@ -94,9 +94,12 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
     )
     
     # Load Trained Weights
-    model_path = os.path.join("models", "ddqn", "ddqn_final.pt")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(BASE_DIR, "models", "ddqn", "ddqn_final.pt")
     if os.path.exists(model_path):
         agent.load(model_path)
+    else:
+        print(f"[WARNING] Model not found at {model_path}, skipping load.")
     
     # Get high-level strategy from OpenAI (Checklist Requirement)
     strategy = get_mission_strategy(task_name, len(obs.drones))

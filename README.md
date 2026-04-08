@@ -1,23 +1,10 @@
- ---
-
+---
 title: Drone Airspace 3D
-emoji: 🚁
 colorFrom: blue
-colorTo: indigo
+colorTo: red
 sdk: docker
 app_port: 7860
 pinned: false
----
-
----
-
-title: Drone Airspace 3D
-emoji: 🚁
-colorFrom: indigo
-colorTo: indigo
-sdk: docker
-pinned: false
-app_port: 7860
 ---
 
 # Autonomous Drone Dispatcher 3D - OpenEnv
