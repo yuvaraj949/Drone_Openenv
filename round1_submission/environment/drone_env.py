@@ -214,6 +214,10 @@ class DroneTrafficEnv:
 
         return obs, reward, done, info
 
+    def close(self) -> None:
+        """Cleanup environment resources."""
+        pass
+
     def state(self) -> Dict[str, Any]:
         """Return raw episode state dict (used by graders)."""
         return {
