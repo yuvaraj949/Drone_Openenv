@@ -1,7 +1,7 @@
 """
 Prioritized Experience Replay Memory
 =====================================
-Ported from PEDRA (aqeelanwar/PEDRA) — network/Memory.py + network/SumTree.py
+Ported from PEDRA (aqeelanwar/PEDRA) - network/Memory.py + network/SumTree.py
 Original author: Aqeel Anwar (ICSRL, Georgia Tech)
 Adapted for: Drone Traffic Control DDQN agent (PyTorch, drone grid env)
 
@@ -84,7 +84,7 @@ class PrioritizedReplayMemory:
     Transitions with high TD-error are sampled more frequently,
     allowing the agent to learn more from surprising experiences.
 
-    Reference: Schaul et al. 2016 — "Prioritized Experience Replay"
+    Reference: Schaul et al. 2016 - "Prioritized Experience Replay"
     PEDRA implementation: aqeelanwar/PEDRA/network/Memory.py
     """
 

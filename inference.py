@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 """
-Baseline Inference Script — Drone Traffic Control
+Baseline Inference Script - Drone Traffic Control
 ==================================================
 MANDATORY: Follows Round 1 [START], [STEP], [END] stdout format.
 Agent: Trained DDQN Model (Double DQN with PER) + OpenAI Mission Strategist.

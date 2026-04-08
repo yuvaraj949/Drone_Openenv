@@ -79,7 +79,7 @@ class PedraAirSimMock:
         row_char = chr(ord('A') + r)
         return f"{row_char}{c + 1}"
 
-    # ── Mapped AirSim API ─────────────────────────────────────────────────────
+    # ->-> Mapped AirSim API ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def confirmConnection(self):
         return True

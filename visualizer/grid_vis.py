@@ -16,7 +16,7 @@ import warnings
 from typing import List, Optional, Tuple
 
 import matplotlib
-matplotlib.use("Agg")   # headless — safe in Docker / HF Spaces
+matplotlib.use("Agg")   # headless - safe in Docker / HF Spaces
 # Suppress "Glyph missing from font" warnings (emoji on Windows with DejaVu)
 warnings.filterwarnings("ignore", message="Glyph.*missing from font")
 import matplotlib.pyplot as plt
@@ -28,13 +28,13 @@ import numpy as np
 from environment.models import Observation
 
 
-# ── colour constants ──────────────────────────────────────────────────────────
+# ->-> colour constants ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 _EMPTY_CLR     = "#1a1a2e"   # dark navy
 _SINGLE_CLR    = "#16213e"   # slight highlight
-_CONGESTED_CLR = "#e94560"   # red — 2+ drones
-_BOTTLENECK_CLR = "#f5a623"  # amber — bottleneck marker
-_DELIVERY_CLR  = "#0f3460"   # deep blue — delivered zone
-_OBSTACLE_CLR  = "#2c2c54"   # purple-grey — blocked zone
+_CONGESTED_CLR = "#e94560"   # red - 2+ drones
+_BOTTLENECK_CLR = "#f5a623"  # amber - bottleneck marker
+_DELIVERY_CLR  = "#0f3460"   # deep blue - delivered zone
+_OBSTACLE_CLR  = "#2c2c54"   # purple-grey - blocked zone
 
 _NORMAL_DRONE  = "#4fc3f7"   # light blue
 _EMERG_DRONE   = "#ef5350"   # red
@@ -74,7 +74,7 @@ class GridAnimator:
         self._frames: List[bytes] = []   # PNG bytes per frame
         self._row_labels = [chr(ord("A") + r) for r in range(rows)]
 
-    # ── public API ────────────────────────────────────────────────────────────
+    # ->-> public API ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def capture(self, obs: Observation, blocked_zones: Optional[List[str]] = None) -> None:
         """Render current observation to a PNG frame and store it."""
@@ -94,7 +94,7 @@ class GridAnimator:
         Returns the resolved output path.
         """
         if not self._frames:
-            raise RuntimeError("No frames captured — call capture() at least once.")
+            raise RuntimeError("No frames captured - call capture() at least once.")
 
         try:
             from PIL import Image
@@ -125,7 +125,7 @@ class GridAnimator:
     def frame_count(self) -> int:
         return len(self._frames)
 
-    # ── internal drawing ──────────────────────────────────────────────────────
+    # ->-> internal drawing ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def _draw_frame(self, obs: Observation, blocked: set) -> Figure:
         fig = plt.figure(figsize=self.figsize, facecolor="#0d0d1a")
@@ -138,7 +138,7 @@ class GridAnimator:
 
         task_label = self.task_name.upper()
         fig.suptitle(
-            f"🚁 Drone Traffic Control — {task_label}   |   Step {obs.step}   |   "
+            f"->? Drone Traffic Control - {task_label}   |   Step {obs.step}   |   "
             f"Collisions: {obs.collisions}",
             color="white", fontsize=12, fontweight="bold", y=0.98,
         )

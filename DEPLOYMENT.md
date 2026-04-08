@@ -1,6 +1,6 @@
 # Deployment Checklist for OpenEnv Round 1 Submission
 
-## Local Validation ✓ COMPLETE
+## Local Validation -> COMPLETE
 
 ### Checks Completed
 - [x] All imports fixed (absolute paths for Docker)
@@ -30,12 +30,12 @@ Hard task:   score=0.336
 - `environment/per_memory.py` - PER buffer
 
 ### Configuration & Deployment
-- `openenv.yaml` - OpenEnv spec compliance ✓
-- `pyproject.toml` - Package metadata ✓
-- `requirements.txt` - Dependencies ✓
-- `README.md` - Full documentation ✓
-- `Dockerfile` - Container specification ✓
-- `inference.py` - Baseline agent in root ✓
+- `openenv.yaml` - OpenEnv spec compliance ->
+- `pyproject.toml` - Package metadata ->
+- `requirements.txt` - Dependencies ->
+- `README.md` - Full documentation ->
+- `Dockerfile` - Container specification ->
+- `inference.py` - Baseline agent in root ->
 
 ### Trained Models
 - `models/ddqn_final.pt` - Pre-trained DDQN checkpoint
@@ -158,10 +158,10 @@ The platform will check:
 ## Notes for Judges
 
 **Real-world utility**: Autonomous drone delivery & airspace management
-**Difficulty progression**: Easy (3 drones, 3×3) → Medium (5 drones, 4×4) → Hard (10 drones, 5×5 + NFZ)
+**Difficulty progression**: Easy (3 drones, 3?-3) -> Medium (5 drones, 4?-4) -> Hard (10 drones, 5?-5 + NFZ)
 **Reward shaping**: Partial credit for progress (distance, delivery, emergency on-time)
-**Baseline**: Greedy BFS with altitude highways (~0.33–0.35 score)
-**Expected RL agent**: 0.6–0.85 score on easy, 0.55–0.75 on medium, 0.45–0.70 on hard
+**Baseline**: Greedy BFS with altitude highways (~0.33->0.35 score)
+**Expected RL agent**: 0.6->0.85 score on easy, 0.55->0.75 on medium, 0.45->0.70 on hard
 
 ---
 

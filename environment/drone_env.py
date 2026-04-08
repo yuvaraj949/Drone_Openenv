@@ -1,5 +1,5 @@
 """
-DroneTrafficEnv — OpenEnv-compatible environment class.
+DroneTrafficEnv - OpenEnv-compatible environment class.
 
 Lifecycle
 ---------
@@ -65,7 +65,7 @@ class DroneTrafficEnv:
         self.emergency_deadline: int = self.cfg["emergency_deadline"]
         self._rng = random.Random(seed)
 
-        # mutable episode state — initialised by reset()
+        # mutable episode state - initialised by reset()
         self._drones: List[DroneState] = []
         self._step: int = 0
         self._collisions: int = 0
@@ -121,7 +121,7 @@ class DroneTrafficEnv:
 
         self._step += 1
 
-        # Build action lookup: drone_id → (move_to, dz)
+        # Build action lookup: drone_id -> (move_to, dz)
         action_map: Dict[str, Tuple[str, float]] = {
             a.drone_id: (a.move_to, a.vertical_command) for a in action.actions
         }
@@ -253,27 +253,27 @@ class DroneTrafficEnv:
         self, drone: DroneState, requested_zone: str, blocked_zones: set
     ) -> str:
         """Return the zone the drone actually moves to after constraint checks."""
-        # Drone already delivered → hover in place
+        # Drone already delivered -> hover in place
         if drone.delivered:
             return drone.location
 
-        # Battery dead → cannot move
+        # Battery dead -> cannot move
         if drone.battery <= 0.0:
             return drone.location
 
         # Requested zone must be adjacent or equal (hover)
         valid_moves = self.graph.get(drone.location, []) + [drone.location]
         if requested_zone not in valid_moves:
-            return drone.location  # illegal move → hover
+            return drone.location  # illegal move -> hover
 
         # Dynamic obstacle blocks the zone
         if requested_zone in blocked_zones:
-            return drone.location  # blocked → hover
+            return drone.location  # blocked -> hover
 
         return requested_zone
 
     def _is_collision(self, zone: str, drone_ids: List[str]) -> bool:
-        """A collision occurs when ≥2 non-delivered drones share a zone."""
+        """A collision occurs when ->2 non-delivered drones share a zone."""
         if len(drone_ids) < 2:
             return False
         # Bottleneck zones allow only 1 drone

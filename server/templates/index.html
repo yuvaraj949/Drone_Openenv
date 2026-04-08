@@ -38,7 +38,7 @@
                 <h2>Live Autonomous Mission</h2>
                 <p>Execute an episode using the pre-trained <strong>DDQN-v1</strong> agent in the 3D-lite environment.</p>
                 <br>
-                <button id="launchBtn" class="cta-button" onclick="runMission()">🚀 Launch Autonomous Mission</button>
+                <button id="launchBtn" class="cta-button" onclick="runMission()">->? Launch Autonomous Mission</button>
             </div>
 
             <div id="missionStatus" class="mission-status hidden">
@@ -155,7 +155,7 @@
             const resultsDiv = document.getElementById('missionResults');
             
             btn.disabled = true;
-            btn.innerText = '🛰️ Computing Trajectories...';
+            btn.innerText = '->->? Computing Trajectories...';
             resultsDiv.classList.add('hidden');
             statusDiv.classList.remove('hidden');
 
@@ -167,7 +167,7 @@
                 playback(data);
             } catch (error) {
                 console.error("Mission failed:", error);
-                btn.innerText = '❌ Mission Error';
+                btn.innerText = '-> Mission Error';
                 btn.disabled = false;
             }
         }
@@ -212,7 +212,7 @@
             badge.style.borderColor = data.success ? '#10b981' : '#ef4444';
 
             resultsDiv.classList.remove('hidden');
-            document.getElementById('launchBtn').innerText = '🚀 Launch Mission';
+            document.getElementById('launchBtn').innerText = '->? Launch Mission';
             document.getElementById('launchBtn').disabled = false;
         }
 

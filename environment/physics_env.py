@@ -1,5 +1,5 @@
 """
-PhysicsDroneEnv — 3D Continuous Physics Environment with Stochastic Wind.
+PhysicsDroneEnv - 3D Continuous Physics Environment with Stochastic Wind.
 Simulates drone dynamics using point-mass physics.
 """
 
