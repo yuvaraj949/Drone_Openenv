@@ -6,7 +6,8 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tempfile
-from typing import Any, Dict, List, Tuple, Optional
+import time
+from typing import Any, Dict, Generator, List, Tuple, Optional
 
 import numpy as np
 import gradio as gr
@@ -67,9 +68,13 @@ _RL_AGENT_CACHE: Dict[str, DDQNAgent] = {}
 
 def _get_rl_agent(env: DroneTrafficEnv) -> Optional[DDQNAgent]:
     global _RL_AGENT_CACHE
-    model_path = "models/ddqn/ddqn_final.pt"
+    task_name = env.task
+    model_path = f"models/ddqn/ddqn_{task_name}.pt"
     if not os.path.exists(model_path):
-        return None
+        # Fallback to general name if task-specific doesn't exist yet
+        model_path = "models/ddqn/ddqn_final.pt"
+        if not os.path.exists(model_path):
+            return None
     
     # We cache based on number of zones (actions) because the agent output dimension
     # must match. If it doesn't match, we start fresh or fallback.
@@ -118,7 +123,7 @@ def run_episode_gradio(
     use_airsim: bool = False,
     airsim_ip: str = "127.0.0.1",
     airsim_port: int = 41451,
-) -> Tuple[str, str, Dict[str, Any]]:
+) -> Tuple[str, Optional[str], Dict[str, Any]]:
     """
     Run a full episode synchronously.
 

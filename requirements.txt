@@ -16,12 +16,10 @@ gradio>=4.20.0
 # PEDRA-inspired RL Agent
 torch>=2.0.0
 tensorboard>=2.14.0
-airsim>=1.8.0
+cosysairsim
 numpy>=2.4.0
-msgpack-rpc-python>=0.4.1
 backports.ssl_match_hostname>=3.7.0.1
 opencv-contrib-python>=4.13.0.92
-
 # Optional: RL baseline
 # gymnasium>=0.29.1
 # stable-baselines3>=2.3.0

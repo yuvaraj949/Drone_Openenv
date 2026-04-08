@@ -1,0 +1,4 @@
+[FAIL] round1_submission: Not ready for multi-mode deployment
+
+Issues found:
+  - Missing pyproject.toml
