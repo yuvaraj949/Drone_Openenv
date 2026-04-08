@@ -1,6 +1,7 @@
-# Core runtime
 pydantic>=2.5.0
 PyYAML>=6.0
+openenv-core
+openai
 
 # Visualization
 rich>=13.0

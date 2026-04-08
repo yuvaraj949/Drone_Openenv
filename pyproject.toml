@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drone_traffic_control"
+version = "0.1.0"
+description = "Autonomous Drone Traffic Control OpenEnv"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "openenv-core",
+    "pydantic>=2.5.0",
+    "PyYAML>=6.0",
+    "torch>=2.0.0",
+    "numpy>=2.4.0",
+    "openai",
+    "rich",
+    "matplotlib",
+    "Pillow"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0"
+]
