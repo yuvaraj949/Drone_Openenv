@@ -137,7 +137,8 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
     # Final Grading
     final_state = env.state()
     grading_result = grade_task(final_state, env.cfg)
-    score = grading_result["score"]
+    # Defensive: ensure grading_result is always a dict
+    score = grading_result.get("score", 0.0) if isinstance(grading_result, dict) else float(grading_result) if grading_result else 0.0
     
     # [END] log
     # success is true if score >= 0.5
