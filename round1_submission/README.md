@@ -1,6 +1,16 @@
+﻿---
+title: Drone Airspace 3D
+emoji: 🚁
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 ---
 title: Drone Airspace 3D
-emoji: 🛸
+emoji: ðŸ›¸
 colorFrom: indigo
 colorTo: indigo
 sdk: docker
@@ -8,7 +18,7 @@ pinned: false
 app_port: 7860
 ---
 
-# Autonomous Drone Dispatcher 3D — OpenEnv
+# Autonomous Drone Dispatcher 3D â€” OpenEnv
 
 *Interactive system documentation and mission gallery are now available directly within the Graduate dashboard.*
 
@@ -26,26 +36,26 @@ This environment simulates a real-world drone traffic control scenario where mul
 
 ### Real-World Application
 
-This environment models actual autonomous delivery logistics systems being deployed by companies like Amazon Prime Air, Zipline, and Wing Aviation. The key challenges—collision avoidance, battery management, priority scheduling—are fundamental to commercial drone operations.
+This environment models actual autonomous delivery logistics systems being deployed by companies like Amazon Prime Air, Zipline, and Wing Aviation. The key challengesâ€”collision avoidance, battery management, priority schedulingâ€”are fundamental to commercial drone operations.
 
 ## Tasks
 
 The environment provides 3 tasks with increasing complexity:
 
 ### Easy: Basic Coordination
-- **Grid**: 3×3 zones, 3 drones
+- **Grid**: 3Ã—3 zones, 3 drones
 - **Challenge**: Navigate 3 drones from start to destination without collisions
-- **Typical Score**: 0.4–0.8
+- **Typical Score**: 0.4â€“0.8
 
 ### Medium: Resource Constraints
-- **Grid**: 4×4 zones, 5 drones, 2 emergencies
+- **Grid**: 4Ã—4 zones, 5 drones, 2 emergencies
 - **Challenge**: Battery drains; bottleneck zones limit simultaneous occupancy
-- **Typical Score**: 0.2–0.6
+- **Typical Score**: 0.2â€“0.6
 
 ### Hard: Dynamic Obstacles + Priorities
-- **Grid**: 5×5 zones, 10 drones, 3 emergencies
+- **Grid**: 5Ã—5 zones, 10 drones, 3 emergencies
 - **Challenge**: Dynamic no-fly zones; emergencies must be delivered within 25 steps
-- **Typical Score**: 0.0–0.4
+- **Typical Score**: 0.0â€“0.4
 
 ## Action Space
 
@@ -155,23 +165,23 @@ curl -X POST http://localhost:7860/state
 
 ```
 round1_submission/
-├── environment/
-│   ├── drone_env.py       # Main environment
-│   ├── models.py          # Pydantic models
-│   ├── tasks.py           # Task configs
-│   ├── graders.py         # Grading logic
-│   ├── dqn_agent.py       # DDQN agent
-│   └── per_memory.py      # Replay buffer
-├── server/
-│   ├── app.py             # FastAPI server
-│   ├── __init__.py
-│   └── __main__.py
-├── models/
-│   └── ddqn_final.pt      # Trained weights
-├── inference.py           # Baseline script
-├── openenv.yaml           # Spec file
-├── requirements.txt       # Dependencies
-└── README.md
+â”œâ”€â”€ environment/
+â”‚   â”œâ”€â”€ drone_env.py       # Main environment
+â”‚   â”œâ”€â”€ models.py          # Pydantic models
+â”‚   â”œâ”€â”€ tasks.py           # Task configs
+â”‚   â”œâ”€â”€ graders.py         # Grading logic
+â”‚   â”œâ”€â”€ dqn_agent.py       # DDQN agent
+â”‚   â””â”€â”€ per_memory.py      # Replay buffer
+â”œâ”€â”€ server/
+â”‚   â”œâ”€â”€ app.py             # FastAPI server
+â”‚   â”œâ”€â”€ __init__.py
+â”‚   â””â”€â”€ __main__.py
+â”œâ”€â”€ models/
+â”‚   â””â”€â”€ ddqn_final.pt      # Trained weights
+â”œâ”€â”€ inference.py           # Baseline script
+â”œâ”€â”€ openenv.yaml           # Spec file
+â”œâ”€â”€ requirements.txt       # Dependencies
+â””â”€â”€ README.md
 ```
 
 ## Dependencies
@@ -184,9 +194,9 @@ round1_submission/
 
 ## Performance
 
-- **Episode time**: 2–5 seconds (CPU)
+- **Episode time**: 2â€“5 seconds (CPU)
 - **Memory**: ~200 MB
-- **Throughput**: 10–20 episodes/min
+- **Throughput**: 10â€“20 episodes/min
 
 ## Real-World Relevance
 
@@ -201,3 +211,4 @@ Companies deploying these systems (Amazon, Wing, Zipline) face exactly these opt
 ## License
 
 MIT License. See LICENSE for details.
+
