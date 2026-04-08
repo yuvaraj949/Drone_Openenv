@@ -19,7 +19,19 @@ from typing import Any, Dict, List, Optional
 # Public grading surface
 # ---------------------------------------------------------------------------
 
-def grade_task(
+def grade_task(*args, **kwargs):
+    """Public grader entrypoint compatible with OpenEnv evaluators."""
+    if len(args) == 1 and not kwargs:
+        result = args[0]
+        if not isinstance(result, dict):
+            return {"score": 0.0}
+        env_state = result.get("env_state", result)
+        task_config = result.get("task_config")
+        return _grade_task(env_state, task_config)
+    return _grade_task(*args, **kwargs)
+
+
+def _grade_task(
     env_state: Dict[str, Any],
     task_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
