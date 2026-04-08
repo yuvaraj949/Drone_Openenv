@@ -17,6 +17,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import asyncio
 import tempfile
 from collections import deque
+from contextlib import asynccontextmanager
 from typing import Optional, Dict, Any, List, Tuple
 import numpy as np
 import gradio as gr
@@ -49,20 +50,23 @@ app = FastAPI(
 )
 
 
-@app.on_event("startup")
-async def startup():
-    """Initialize environment on server startup."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize and cleanup environment."""
     global _env
     _task_env = os.getenv("TASK", "easy")
     _env = DroneTrafficEnv(task=_task_env)
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    """Clean up environment on shutdown."""
-    global _env
+    yield
     if _env is not None:
         await _env.close() if hasattr(_env, "close") else None
+
+
+app = FastAPI(
+    title="Drone Traffic Control - OpenEnv",
+    description="Autonomous drone dispatcher environment",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 
 @app.post("/reset")
@@ -375,7 +379,7 @@ TASK_INFO = {
     "hard": "5x5 Grid | 10 Drones | 3 Emergency | 50 Steps | Dynamic Obstacles",
 }
 
-with gr.Blocks(title="Drone Traffic Control - OpenEnv", css=".gradio-container { max-width: 1200px !important; }") as demo:
+with gr.Blocks(title="Drone Traffic Control - OpenEnv") as demo:
 
     tabs = gr.Tabs()
     
