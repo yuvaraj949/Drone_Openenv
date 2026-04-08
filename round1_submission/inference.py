@@ -2,42 +2,40 @@
 Baseline Inference Script — Drone Autonomous Dispatcher
 ======================================================
 MANDATORY: Follows Round 1 [START], [STEP], [END] stdout format.
-Agent: Trained DDQN Model (Double DQN with PER).
+Agent: LLM-based Dispatcher (using OpenAI Client).
 """
 
 import os
 import sys
+import json
 from typing import List, Optional, Dict
+from dotenv import load_dotenv
 
 # Ensure local environment package is discoverable
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+# Load environment variables from .env file
+load_dotenv()
+
 from environment.drone_env import DroneTrafficEnv
 from environment.models import Action, DroneAction, HOVER
 from environment.graders import grade_task
-from environment.tasks import get_task_config
-from environment.dqn_agent import DDQNAgent
+from openai import OpenAI
 
-# Environment variables
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+# ---------------------------------------------------------------------------
+# Requirement: API_BASE_URL, MODEL_NAME, HF_TOKEN
+# ---------------------------------------------------------------------------
+
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api-inference.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Llama-3.1-8B-Instruct")
+HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
+
+CLIENT = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=HF_TOKEN,
+)
+
 TASK_NAME = os.getenv("TASK", "easy")
-MODEL_NAME = "Trained-DDQN-v1"
-
-# ---------------------------------------------------------------------------
-# Agent Configuration (matching training setup in config.ini)
-# ---------------------------------------------------------------------------
-
-AGENT_CONFIG = {
-    'general': {'device': 'cpu'},
-    'network': {'hidden_sizes': '512, 512', 'activation': 'relu'},
-    'dqn': {
-        'gamma': 0.99, 'learning_rate': 0.001, 'batch_size': 128,
-        'update_target_interval': 500, 'train_interval': 4,
-        'wait_before_train': 500, 'buffer_len': 10000,
-        'epsilon_start': 0.05, 'epsilon_end': 0.05, 'epsilon_decay_steps': 25000
-    },
-    'logging': {'tensorboard_dir': 'runs/ddqn'}
-}
 
 # ---------------------------------------------------------------------------
 # Logging Utilities
@@ -59,6 +57,52 @@ def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> No
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 # ---------------------------------------------------------------------------
+# LLM Agent Logic
+# ---------------------------------------------------------------------------
+
+def get_llm_action(obs) -> Action:
+    """
+    Asks the LLM to provide drone actions based on the current observation.
+    """
+    system_prompt = (
+        "You are an autonomous drone traffic dispatcher. Your goal is to move drones to their destinations "
+        "without collisions and while managing battery. "
+        "Rules: Drones can move to an adjacent zone or 'hover'. Every step costs battery. "
+        "Emergencies have priority (2). Bottleneck zones allow only 1 drone at a time. "
+        "Respond ONLY with a JSON object matching the format: "
+        "{\"actions\": [{\"drone_id\": \"D1\", \"move_to\": \"B2\", \"vertical_command\": 0.0}, ...]}"
+    )
+
+    # Simplified observation for context
+    obs_json = {
+        "step": obs.step,
+        "drones": [
+            {
+                "id": d.id, "location": d.location, "destination": d.destination,
+                "battery": round(d.battery, 1), "priority": d.priority, "altitude": round(d.altitude, 1)
+            } for d in obs.drones if not d.delivered
+        ],
+        "congestion": obs.congestion_map,
+        "graph": obs.graph_edges
+    }
+
+    try:
+        response = CLIENT.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Current observation: {json.dumps(obs_json)}"}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.0
+        )
+        data = json.loads(response.choices[0].message.content)
+        return Action(**data)
+    except Exception as e:
+        # Fallback to HOVER on error to satisfy the loop
+        return Action(actions=[DroneAction(drone_id=d.id, move_to=HOVER) for d in obs.drones if not d.delivered])
+
+# ---------------------------------------------------------------------------
 # Episode Runner
 # ---------------------------------------------------------------------------
 
@@ -66,23 +110,6 @@ def main() -> None:
     # Initialize Environment
     env = DroneTrafficEnv(task=TASK_NAME)
     cfg = env.cfg
-    zone_names = env.all_zones
-
-    # Initialize Agent
-    agent = DDQNAgent(
-        cfg=AGENT_CONFIG,
-        num_zones=len(zone_names),
-        zone_names=zone_names,
-        graph=env.graph,
-        task_cfg=cfg
-    )
-
-    # Load Trained Weights
-    model_path = os.path.join(os.path.dirname(__file__), "models", "ddqn_final.pt")
-    if os.path.exists(model_path):
-        agent.load(model_path)
-    else:
-        print(f"[WARN] Model checkpoint not found at {model_path}. Using random initialization.")
 
     rewards: List[float] = []
     steps_taken = 0
@@ -95,16 +122,15 @@ def main() -> None:
         obs = env.reset()
         max_steps = cfg["max_steps"]
 
-        # 3D-lite: assigning altitude highways to avoid mid-air collisions (as a wrapper/safety)
+        # 3D-lite: assigning altitude highways as a safety wrapper
         safety_margin = 3.0
         drone_highways = {d.id: 10.0 + (i * safety_margin) for i, d in enumerate(obs.drones)}
 
         for step_idx in range(1, max_steps + 1):
-            # Select Action using Trained DDQN
-            # The agent expects an Observation object and returns an Action object
-            action = agent.select_action(obs, training=False, step=step_idx)
+            # Select Action using LLM
+            action = get_llm_action(obs)
 
-            # Post-process actions for 3D-lite altitude control
+            # Post-process actions for 3D-lite altitude control (safety highway)
             for drone_act in action.actions:
                 drone_state = next((d for d in obs.drones if d.id == drone_act.drone_id), None)
                 if drone_state:
@@ -132,7 +158,7 @@ def main() -> None:
         st = env.state()
         grading_result = grade_task(st, cfg)
         score = grading_result.get("score", 0.0)
-        success = score >= 0.5 # Success threshold in 0-1 range
+        success = score >= 0.5 
 
     except Exception as e:
         print(f"Error during inference: {e}", file=sys.stderr)
@@ -141,3 +167,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
