@@ -37,5 +37,5 @@ grader:
 # Baseline agent for scoring reproduction
 agent:
   baseline: inference.py
-  type: greedy-bfs
-  notes: "Uses Greedy-BFS with vertical altitude highways for collision avoidance."
+  type: llm-dispatcher
+  notes: "Uses an LLM-based dispatcher with vertical altitude highways for collision avoidance."
