@@ -406,7 +406,7 @@ with gr.Blocks(title="Drone Traffic Control — OpenEnv", css=".gradio-container
                     
                     with gr.Accordion("🌬️ Physics & AirSim Settings", open=False):
                         use_3d_check = gr.Checkbox(label="3D Space", value=True)
-                        physics_check = gr.Checkbox(label="Physics Mode", value=True)
+                        physics_check = gr.Checkbox(label="Physics Mode", value=False)
                         wind_base = gr.Slider(0, 5, value=1.0, label="Base Wind Intensity")
                         wind_gust = gr.Slider(0, 2, value=0.5, label="Gust Variability")
                         use_airsim_check = gr.Checkbox(
