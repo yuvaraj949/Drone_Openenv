@@ -136,6 +136,38 @@ TASK_CONFIGS: Dict[str, dict] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Task manifest with graders (for OpenEnv validators)
+# ---------------------------------------------------------------------------
+
+TASKS = [
+    {
+        "name": "easy",
+        "config": TASK_CONFIGS["easy"],
+        "grader": {
+            "module": "environment.graders",
+            "function": "grade_task",
+        },
+    },
+    {
+        "name": "medium",
+        "config": TASK_CONFIGS["medium"],
+        "grader": {
+            "module": "environment.graders",
+            "function": "grade_task",
+        },
+    },
+    {
+        "name": "hard",
+        "config": TASK_CONFIGS["hard"],
+        "grader": {
+            "module": "environment.graders",
+            "function": "grade_task",
+        },
+    },
+]
+
+
 def get_task_config(task_name: str) -> dict:
     """Return the task config dict and inject a pre-built adjacency graph."""
     if task_name not in TASK_CONFIGS:

@@ -106,7 +106,7 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
 
     # [START] log
     print(f"[START] task={task_name} env=drone_traffic_control model={MODEL_NAME}")
-    print(f"INFO: Strategy: {strategy}")
+    print(f"INFO: Strategy: {strategy}", file=sys.stderr)
 
     rewards: List[float] = []
     done = False
@@ -142,8 +142,8 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> float:
     
     # [END] log
     # success is true if score >= 0.5
-    reward_list_str = ",".join([f"{r:.1f}" for r in rewards])
-    print(f"[END] success={str(score >= 0.5).lower()} steps={step_idx} score={score:.4f} rewards={reward_list_str}")
+    reward_list_str = ",".join([f"{r:.2f}" for r in rewards])
+    print(f"[END] success={str(score >= 0.5).lower()} steps={step_idx} rewards={reward_list_str}")
 
     return score
 
