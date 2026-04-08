@@ -22,7 +22,7 @@ from rich import box
 from environment.models import Observation, Reward
 
 
-# ── colour palette ────────────────────────────────────────────────────────────
+# ->-> colour palette ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 _EMERGENCY_COLOUR = "bold red"
 _NORMAL_COLOUR    = "bold cyan"
 _DELIVERED_COLOUR = "bold green"
@@ -32,8 +32,8 @@ _WARM_ZONE        = "on dark_orange3"  # 2 drones
 _COOL_ZONE        = "on grey23"        # 1 drone
 _EMPTY_ZONE       = ""                 # 0 drones
 
-_PRIORITY_ICON = {1: "📦", 2: "🚨"}
-_BATTERY_ICON  = lambda b: "🔋" if b > 30 else ("⚠️ " if b > 10 else "💀")
+_PRIORITY_ICON = {1: "->?", 2: "->?"}
+_BATTERY_ICON  = lambda b: "->?" if b > 30 else ("->-> " if b > 10 else "->?")
 
 
 class TerminalRenderer:
@@ -63,7 +63,7 @@ class TerminalRenderer:
         self.con = console or Console()
         self._step_history: List[float] = []
 
-    # ── public API ────────────────────────────────────────────────────────────
+    # ->-> public API ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def render(
         self,
@@ -102,10 +102,10 @@ class TerminalRenderer:
             summary.add_row("Total Reward", f"{sum(self._step_history):.2f}")
             summary.add_row("Mean Reward",  f"{sum(self._step_history)/len(self._step_history):.3f}")
 
-        self.con.print(Panel(summary, title="[bold white]📊 Episode Complete[/bold white]",
+        self.con.print(Panel(summary, title="[bold white]->? Episode Complete[/bold white]",
                              border_style="green", expand=False))
 
-    # ── grid panel ────────────────────────────────────────────────────────────
+    # ->-> grid panel ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def _build_grid_panel(self, obs: Observation) -> Panel:
         cmap = obs.congestion_map
@@ -138,33 +138,33 @@ class TerminalRenderer:
                     d.id for d in obs.drones
                     if d.location == zone and not d.delivered
                 ]
-                label = ",".join(ids) if ids else "·  "
+                label = ",".join(ids) if ids else "??  "
                 label = label[:4].ljust(4)
                 row_text.append(f" {label}", style=bg)
             lines.append(row_text)
 
         grid_text = Text("\n").join(lines)
-        return Panel(grid_text, title=f"[bold]🗺  Airspace — Step {obs.step}[/bold]",
+        return Panel(grid_text, title=f"[bold]??-?  Airspace - Step {obs.step}[/bold]",
                      border_style="blue", expand=False)
 
-    # ── drone table ───────────────────────────────────────────────────────────
+    # ->-> drone table ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def _build_drone_table(self, obs: Observation) -> Panel:
         t = Table(box=box.SIMPLE_HEAD, show_lines=False, expand=False)
         t.add_column("ID",   style="bold", width=4)
         t.add_column("Loc",  width=4)
-        t.add_column("→ Dst", width=5)
+        t.add_column("-> Dst", width=5)
         t.add_column("Bat",  width=6)
         t.add_column("Pri",  width=4)
-        t.add_column("✓",    width=3)
+        t.add_column("->",    width=3)
 
         for d in sorted(obs.drones, key=lambda x: (-x.priority, x.id)):
             if d.delivered:
                 style = _DELIVERED_COLOUR
-                check = "✓"
+                check = "->"
             elif d.battery <= 0:
                 style = _DEAD_COLOUR
-                check = "💀"
+                check = "->?"
             elif d.priority == 2:
                 style = _EMERGENCY_COLOUR
                 check = ""
@@ -184,9 +184,9 @@ class TerminalRenderer:
                 style=style,
             )
 
-        return Panel(t, title="[bold]🚁 Drones[/bold]", border_style="blue", expand=False)
+        return Panel(t, title="[bold]->? Drones[/bold]", border_style="blue", expand=False)
 
-    # ── stats panel ───────────────────────────────────────────────────────────
+    # ->-> stats panel ->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->
 
     def _build_stats_panel(
         self,
@@ -217,5 +217,5 @@ class TerminalRenderer:
         if cum_col:
             parts.append(f"[red]Total collisions: {cum_col}[/red]")
 
-        text = Text("  │  ".join(parts))
+        text = Text("  ->  ".join(parts))
         return Panel(text, border_style="dim", expand=True)

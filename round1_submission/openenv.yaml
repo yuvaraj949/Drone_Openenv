@@ -3,7 +3,7 @@ name: drone-airspace-3d
 version: "1.0.0"
 openenv_version: "0.2.0"
 description: >
-  Autonomous Drone Dispatcher 3D — A high-fidelity logistics simulation
+  Autonomous Drone Dispatcher 3D - A high-fidelity logistics simulation
   requiring vertical separation and collision avoidance in a grid-based airspace.
 
 # Type specifications (Pydantic models)

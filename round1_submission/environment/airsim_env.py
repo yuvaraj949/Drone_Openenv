@@ -1,5 +1,5 @@
 """
-AirSimDroneEnv — High-Fidelity Unreal Engine 4 interface for drone traffic.
+AirSimDroneEnv - High-Fidelity Unreal Engine 4 interface for drone traffic.
 Wraps the AirSim MultirotorClient to provide a photorealistic training/inference environment.
 """
 
@@ -279,7 +279,7 @@ class AirSimDroneEnv(DroneTrafficEnv):
             # Map NED coordinates (AirSim) back to our "Grid" space (relative)
             # or just use raw meters.
             # Convert AirSim real-world coordinates (meters) to grid reference
-            # Map x: -50..+50m → columns A-J (10 cols), y: -50..+50m → rows 1-10
+            # Map x: -50..+50m -> columns A-J (10 cols), y: -50..+50m -> rows 1-10
             col_idx = max(0, min(9, int((pos.x_val + 50) / 10)))
             row_idx = max(1, min(10, int((pos.y_val + 50) / 10) + 1))
             col_letter = chr(ord('A') + col_idx)

@@ -80,7 +80,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Drone Traffic Control — OpenEnv",
+    title="Drone Traffic Control - OpenEnv",
     description="Autonomous drone dispatcher environment with live demo",
     version="1.1.0",
     lifespan=lifespan,

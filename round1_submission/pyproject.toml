@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "drone-airspace-3d"
 version = "1.0.0"
-description = "Autonomous Drone Dispatcher 3D — OpenEnv Environment"
+description = "Autonomous Drone Dispatcher 3D - OpenEnv Environment"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

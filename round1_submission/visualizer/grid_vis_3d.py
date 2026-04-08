@@ -80,7 +80,7 @@ class GridAnimator3D:
         self._draw_info(ax_info, obs)
         
         fig.suptitle(
-            f"3D Drone Traffic Control — {self.task_name.upper()} | Step {obs.step} | Collisions: {obs.collisions}",
+            f"3D Drone Traffic Control - {self.task_name.upper()} | Step {obs.step} | Collisions: {obs.collisions}",
             color="white", fontsize=12, fontweight="bold", y=0.98
         )
         fig.tight_layout(rect=[0, 0, 1, 0.96])

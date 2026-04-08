@@ -1,4 +1,5 @@
-﻿---
+ ---
+
 title: Drone Airspace 3D
 emoji: 🚁
 colorFrom: blue
@@ -9,8 +10,9 @@ pinned: false
 ---
 
 ---
+
 title: Drone Airspace 3D
-emoji: ðŸ›¸
+emoji: 🚁
 colorFrom: indigo
 colorTo: indigo
 sdk: docker
@@ -18,17 +20,16 @@ pinned: false
 app_port: 7860
 ---
 
-# Autonomous Drone Dispatcher 3D â€” OpenEnv
+# Autonomous Drone Dispatcher 3D - OpenEnv
 
 *Interactive system documentation and mission gallery are now available directly within the Graduate dashboard.*
 
-
 A high-fidelity logistics simulation environment for autonomous drone coordination and traffic management in 3D airspace.
-
 
 ## Overview
 
 This environment simulates a real-world drone traffic control scenario where multiple autonomous delivery drones must navigate through a shared 3D grid-based airspace to deliver packages while:
+
 - **Avoiding collisions** with other drones at different altitudes
 - **Managing battery** constraints with realistic drain rates
 - **Respecting traffic rules** (bottleneck zones, no-fly zones on hard task)
@@ -36,26 +37,29 @@ This environment simulates a real-world drone traffic control scenario where mul
 
 ### Real-World Application
 
-This environment models actual autonomous delivery logistics systems being deployed by companies like Amazon Prime Air, Zipline, and Wing Aviation. The key challengesâ€”collision avoidance, battery management, priority schedulingâ€”are fundamental to commercial drone operations.
+This environment models actual autonomous delivery logistics systems being deployed by companies like Amazon Prime Air, Zipline, and Wing Aviation. The key challenges-collision avoidance, battery management, priority scheduling-are fundamental to commercial drone operations.
 
 ## Tasks
 
 The environment provides 3 tasks with increasing complexity:
 
 ### Easy: Basic Coordination
-- **Grid**: 3Ã—3 zones, 3 drones
+
+- **Grid**: 3x3 zones, 3 drones
 - **Challenge**: Navigate 3 drones from start to destination without collisions
-- **Typical Score**: 0.4â€“0.8
+- **Typical Score**: 0.4-0.8
 
 ### Medium: Resource Constraints
-- **Grid**: 4Ã—4 zones, 5 drones, 2 emergencies
+
+- **Grid**: 4x4 zones, 5 drones, 2 emergencies
 - **Challenge**: Battery drains; bottleneck zones limit simultaneous occupancy
-- **Typical Score**: 0.2â€“0.6
+- **Typical Score**: 0.2-0.6
 
 ### Hard: Dynamic Obstacles + Priorities
-- **Grid**: 5Ã—5 zones, 10 drones, 3 emergencies
+
+- **Grid**: 5x5 zones, 10 drones, 3 emergencies
 - **Challenge**: Dynamic no-fly zones; emergencies must be delivered within 25 steps
-- **Typical Score**: 0.0â€“0.4
+- **Typical Score**: 0.0-0.4
 
 ## Action Space
 
@@ -102,12 +106,14 @@ Final score: normalized reward in [0, 1]
 ## Installation
 
 ### Local
+
 ```bash
 pip install -r requirements.txt
 python inference.py
 ```
 
 ### Docker
+
 ```bash
 docker build -t drone-traffic-control .
 docker run -p 7860:7860 drone-traffic-control
@@ -116,12 +122,14 @@ docker run -p 7860:7860 drone-traffic-control
 ## Usage
 
 ### Baseline Run
+
 ```bash
 export TASK=easy
 python inference.py
 ```
 
 Output:
+
 ```
 [START] task=easy env=drone_traffic model=Trained-DDQN-v1
 [STEP] step=1 action=D1:B2;D2:A3;D3:hover reward=-0.50 done=false error=null
@@ -129,6 +137,7 @@ Output:
 ```
 
 ### Programmatic
+
 ```python
 from environment.drone_env import DroneTrafficEnv
 from environment.models import Action, DroneAction
@@ -144,6 +153,7 @@ for step in range(30):
 ```
 
 ### OpenEnv Server
+
 ```bash
 curl -X POST http://localhost:7860/reset?task=easy
 curl -X POST http://localhost:7860/step -H "Content-Type: application/json" \
@@ -165,23 +175,23 @@ curl -X POST http://localhost:7860/state
 
 ```
 round1_submission/
-â”œâ”€â”€ environment/
-â”‚   â”œâ”€â”€ drone_env.py       # Main environment
-â”‚   â”œâ”€â”€ models.py          # Pydantic models
-â”‚   â”œâ”€â”€ tasks.py           # Task configs
-â”‚   â”œâ”€â”€ graders.py         # Grading logic
-â”‚   â”œâ”€â”€ dqn_agent.py       # DDQN agent
-â”‚   â””â”€â”€ per_memory.py      # Replay buffer
-â”œâ”€â”€ server/
-â”‚   â”œâ”€â”€ app.py             # FastAPI server
-â”‚   â”œâ”€â”€ __init__.py
-â”‚   â””â”€â”€ __main__.py
-â”œâ”€â”€ models/
-â”‚   â””â”€â”€ ddqn_final.pt      # Trained weights
-â”œâ”€â”€ inference.py           # Baseline script
-â”œâ”€â”€ openenv.yaml           # Spec file
-â”œâ”€â”€ requirements.txt       # Dependencies
-â””â”€â”€ README.md
+|-- environment/
+|   |-- drone_env.py       # Main environment
+|   |-- models.py          # Pydantic models
+|   |-- tasks.py           # Task configs
+|   |-- graders.py         # Grading logic
+|   |-- dqn_agent.py       # DDQN agent
+|   \-- per_memory.py      # Replay buffer
+|-- server/
+|   |-- app.py             # FastAPI server
+|   |-- __init__.py
+|   \-- __main__.py
+|-- models/
+|   \-- ddqn_final.pt      # Trained weights
+|-- inference.py           # Baseline script
+|-- openenv.yaml           # Spec file
+|-- requirements.txt       # Dependencies
+\-- README.md
 ```
 
 ## Dependencies
@@ -194,13 +204,14 @@ round1_submission/
 
 ## Performance
 
-- **Episode time**: 2â€“5 seconds (CPU)
+- **Episode time**: 2-5 seconds (CPU)
 - **Memory**: ~200 MB
-- **Throughput**: 10â€“20 episodes/min
+- **Throughput**: 10-20 episodes/min
 
 ## Real-World Relevance
 
 This environment addresses core challenges in actual autonomous delivery systems:
+
 - Multi-agent path planning with constraints
 - Resource management (battery, time)
 - Collision avoidance in shared airspace
@@ -211,4 +222,3 @@ Companies deploying these systems (Amazon, Wing, Zipline) face exactly these opt
 ## License
 
 MIT License. See LICENSE for details.
-

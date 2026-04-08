@@ -43,7 +43,7 @@ def get_env() -> DroneTrafficEnv:
 
 # Create FastAPI app for HF Spaces
 app = FastAPI(
-    title="Drone Traffic Control — OpenEnv",
+    title="Drone Traffic Control - OpenEnv",
     description="Autonomous drone dispatcher environment",
     version="1.0.0",
 )
@@ -132,7 +132,7 @@ def read_config(path: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Agent (same greedy BFS as inference.py — importable here too)
+# Agent (same greedy BFS as inference.py - importable here too)
 # ---------------------------------------------------------------------------
 
 def _bfs_next_zone(current, destination, graph, blocked_zones=None):
@@ -230,9 +230,9 @@ def run_episode_gradio(
 
     Returns
     -------
-    log_text   : str — full step-by-step log
-    gif_frames : list of PIL Images — one per step
-    summary    : dict — final scores and stats
+    log_text   : str - full step-by-step log
+    gif_frames : list of PIL Images - one per step
+    summary    : dict - final scores and stats
     """
     from visualizer.grid_vis import GridAnimator
 
@@ -245,7 +245,7 @@ def run_episode_gradio(
         try:
             env.connect()
         except Exception as e:
-            return f"❌ AirSim Connection Failed: {e}", None, {}
+            return f"-> AirSim Connection Failed: {e}", None, {}
     elif physics_mode:
         from environment.physics_env import PhysicsDroneEnv
         env = PhysicsDroneEnv(task=task, seed=seed)
@@ -295,8 +295,8 @@ def run_episode_gradio(
                  f"MaxSteps={env.max_steps} | Seed={seed}")
     lines.append("-" * 56)
     for d in obs.drones:
-        tag = "🚨 EMERGENCY" if d.priority == 2 else "📦 normal"
-        lines.append(f"  {d.id}: {d.location} → {d.destination} [{tag}]")
+        tag = "->? EMERGENCY" if d.priority == 2 else "->? normal"
+        lines.append(f"  {d.id}: {d.location} -> {d.destination} [{tag}]")
     lines.append("")
 
     step_rewards: List[float] = []
@@ -334,10 +334,10 @@ def run_episode_gradio(
             if not d.delivered:
                 lines.append(f"  {d.id} @ {d.location} (Batt: {d.battery:.1f}%, X:{d.x:.1f}, Y:{d.y:.1f}, Z:{d.altitude:.1f}m)")
             else:
-                lines.append(f"  {d.id} ✅ DELIVERED (X:{d.x:.1f}, Y:{d.y:.1f}, Z:{d.altitude:.1f}m)")
+                lines.append(f"  {d.id} -> DELIVERED (X:{d.x:.1f}, Y:{d.y:.1f}, Z:{d.altitude:.1f}m)")
         
         if info.get("cumulative_collisions", 0) > 0:
-            lines.append(f"  💥 COLLISION DETECTED: {info.get('cumulative_collisions', 0)} occurrence(s)")
+            lines.append(f"  ->? COLLISION DETECTED: {info.get('cumulative_collisions', 0)} occurrence(s)")
         
         animator.capture(obs)
 
@@ -365,7 +365,7 @@ def run_episode_gradio(
 # ---------------------------------------------------------------------------
 
 DESCRIPTION = """
-# 🚁 Drone Traffic Control (OpenEnv)
+# ->? Drone Traffic Control (OpenEnv)
 Manage a fleet of delivery drones. Avoid collisions, respect bottlenecks, and prioritise emergency payloads.
 """
 
@@ -375,17 +375,17 @@ TASK_INFO = {
     "hard": "5x5 Grid | 10 Drones | 3 Emergency | 50 Steps | Dynamic Obstacles",
 }
 
-with gr.Blocks(title="Drone Traffic Control — OpenEnv", css=".gradio-container { max-width: 1200px !important; }") as demo:
+with gr.Blocks(title="Drone Traffic Control - OpenEnv", css=".gradio-container { max-width: 1200px !important; }") as demo:
 
     tabs = gr.Tabs()
     
     with tabs:
-        with gr.Tab("🚀 Simulation Hub", id=0):
+        with gr.Tab("->? Simulation Hub", id=0):
             gr.Markdown(DESCRIPTION)
             
             with gr.Row():
                 with gr.Column(scale=1):
-                    gr.Markdown("## ⚙️ Configuration")
+                    gr.Markdown("## ->-> Configuration")
                     task_dropdown = gr.Dropdown(
                         choices=["easy", "medium", "hard"],
                         value="hard",
@@ -404,7 +404,7 @@ with gr.Blocks(title="Drone Traffic Control — OpenEnv", css=".gradio-container
                         label="Routing Algorithm",
                     )
                     
-                    with gr.Accordion("🌬️ Physics & AirSim Settings", open=False):
+                    with gr.Accordion("->->? Physics & AirSim Settings", open=False):
                         use_3d_check = gr.Checkbox(label="3D Space", value=True)
                         physics_check = gr.Checkbox(label="Physics Mode", value=False)
                         wind_base = gr.Slider(0, 5, value=1.0, label="Base Wind Intensity")
@@ -412,42 +412,42 @@ with gr.Blocks(title="Drone Traffic Control — OpenEnv", css=".gradio-container
                         use_airsim_check = gr.Checkbox(
                             label="Connect to AirSim (Native)", 
                             value=False,
-                            info="⚠️ Can be executed only in NATIVE mode with AirSim environment and Unreal Engine installed."
+                            info="->-> Can be executed only in NATIVE mode with AirSim environment and Unreal Engine installed."
                         )
                         airsim_ip_input = gr.Textbox(value="127.0.0.1", label="AirSim IP")
                         airsim_port_input = gr.Number(value=41451, label="AirSim Port")
-                        gallery_jump_link = gr.Button("🖼️ View AirSim Gallery (Online Highlights)", variant="link")
+                        gallery_jump_link = gr.Button("??-->? View AirSim Gallery (Online Highlights)", variant="link")
 
-                    run_btn = gr.Button("▶  Run Simulation Episode", variant="primary")
+                    run_btn = gr.Button("?-?  Run Simulation Episode", variant="primary")
                     
                     gr.Markdown("---")
-                    doc_btn = gr.Button("📖 View System Documentation & Gallery", variant="secondary")
+                    doc_btn = gr.Button("->- View System Documentation & Gallery", variant="secondary")
 
                 with gr.Column(scale=2):
-                    gr.Markdown("## 📺 Live Simulation")
+                    gr.Markdown("## ->? Live Simulation")
                     vis_out = gr.Image(label="Grid Visualization", type="pil")
                     
-                    gr.Markdown("## 📜 Step Log")
+                    gr.Markdown("## ->? Step Log")
                     log_out = gr.Textbox(label="", lines=10, max_lines=15, interactive=False)
                     score_out = gr.Label(label="Overall Performance Score")
 
-        with gr.Tab("📖 System Documentation & Gallery", id=1):
-            gr.Markdown("# 🛸 Autonomous Drone Traffic Control Documentation")
+        with gr.Tab("->- System Documentation & Gallery", id=1):
+            gr.Markdown("# ->? Autonomous Drone Traffic Control Documentation")
             
             with gr.Row():
                 with gr.Column(scale=2):
                     gr.Markdown("""
-                    ## 📑 Project Overview
+                    ## ->? Project Overview
                     This system provides a unified framework for testing autonomous drone routing algorithms in a 3D grid-based airspace. 
                     It supports deterministic search (Greedy BFS), Deep Reinforcement Learning (PyTorch DDQN), and legacy PEDRA architectures.
 
-                    ### 🚀 Key Features
+                    ### ->? Key Features
                     - **Multi-Agent Coordination**: Manage up to 10 drones simultaneously.
                     - **3D Airspace**: Support for continuous altitude flight levels to avoid vertical collisions.
                     - **AirSim Integration**: Native bridge to Microsoft AirSim (Unreal Engine) for high-fidelity physics and visual testing.
                     - **Legacy Bridge**: Compatibility layer for original PEDRA (TensorFlow 1.x) models.
 
-                    ## 🎮 Simulation Modes
+                    ## ->? Simulation Modes
                     1. **Greedy BFS**: Baseline shortest-path algorithm with simple collision avoidance.
                     2. **DDQN (RL)**: Modern Deep Q-Network agent trained on delivery efficiency.
                     3. **PEDRA Legacy**: Port of the 2019 PEDRA system using our modern grid bridge.
@@ -455,13 +455,13 @@ with gr.Blocks(title="Drone Traffic Control — OpenEnv", css=".gradio-container
                     """)
                 
                 with gr.Column(scale=1):
-                    back_btn = gr.Button("🏠 Return to Simulation Hub", variant="primary")
-                    gr.Markdown("### 📊 Performance Metrics")
+                    back_btn = gr.Button("->? Return to Simulation Hub", variant="primary")
+                    gr.Markdown("### ->? Performance Metrics")
                     gr.Markdown("- **Delivery Rate**: Successful drops vs total missions.")
                     gr.Markdown("- **Collision Avoidance**: Penalty for proximity violations.")
                     gr.Markdown("- **Energy Efficiency**: Battery drain vs distance covered.")
 
-            gr.Markdown("## 📸 AirSim Mission Highlights")
+            gr.Markdown("## ->? AirSim Mission Highlights")
             gallery_paths = [f"assets/airsim_demo/mission_{i:02d}.png" for i in range(1, 7)]
             gallery = gr.Gallery(
                 value=gallery_paths,
