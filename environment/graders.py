@@ -24,7 +24,7 @@ def grade_task(*args, **kwargs):
     if len(args) == 1 and not kwargs:
         result = args[0]
         if not isinstance(result, dict):
-            return {"score": 0.0}
+            return {"score": 0.01}  # Strictly within (0, 1), not 0.0
         env_state = result.get("env_state", result)
         task_config = result.get("task_config")
         return _grade_task(env_state, task_config)
@@ -61,7 +61,7 @@ def _grade_task(
     total_drones = len(drones)
     if total_drones == 0:
         return {
-            "score": 0.0,
+            "score": 0.01,  # Strictly within (0, 1), not 0.0
             "delivered": 0,
             "collisions": 0,
             "delivery_rate": 0.0,
@@ -109,8 +109,11 @@ def _grade_task(
         + 0.10 * efficiency_score
     )
 
+    # Clamp score strictly within (0, 1), not including boundaries [0.01, 0.99]
+    clamped_score = max(0.01, min(0.99, score))
+
     return {
-        "score": round(min(max(score, 0.0), 1.0), 4),
+        "score": round(clamped_score, 4),
         "delivered": delivered,
         "collisions": collisions,
         "delivery_rate": round(delivery_rate, 4),
