@@ -19,10 +19,7 @@ tasks:
     num_drones: 3
     num_emergencies: 1
     grid: "3x3"
-    grader:
-      module: environment.graders
-      function: grade_task
-      score_range: [0.0, 1.0]
+    grader: environment.graders:grade_task
 
   - name: medium
     description: "5 drones, 2 emergencies, 4×4 grid with bottleneck zones, 40 steps"
@@ -30,10 +27,7 @@ tasks:
     num_drones: 5
     num_emergencies: 2
     grid: "4x4"
-    grader:
-      module: environment.graders
-      function: grade_task
-      score_range: [0.0, 1.0]
+    grader: environment.graders:grade_task
 
   - name: hard
     description: "10 drones, 3 emergencies, 5×5 grid with dynamic obstacles, 50 steps"
@@ -41,15 +35,9 @@ tasks:
     num_drones: 10
     num_emergencies: 3
     grid: "5x5"
-    grader:
-      module: environment.graders
-      function: grade_task
-      score_range: [0.0, 1.0]
+    grader: environment.graders:grade_task
 
-grader:
-  module: environment.graders
-  function: grade_task
-  score_range: [0.0, 1.0]
+grader: environment.graders:grade_task
 
 agent:
   baseline: inference.py
