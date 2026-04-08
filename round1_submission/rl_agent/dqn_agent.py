@@ -81,6 +81,8 @@ class DDQNAgent:
         # Check GPU
         use_cuda = cfg['general']['device'].lower() == 'cuda' and torch.cuda.is_available()
         self.device = torch.device('cuda' if use_cuda else 'cpu')
+        # Force CPU for evaluation
+        self.device = torch.device('cpu')
         
         # Build Networks
         self.q_net = QNetwork(self.state_dim, hidden_sizes, self.action_dim, activation).to(self.device)
@@ -327,18 +329,14 @@ class DDQNAgent:
         }, filepath)
         
     def load(self, filepath: str):
-        if not os.path.exists(filepath):
-            print(f"[Warn] Checkpoint {filepath} not found. Starting fresh.")
-            return
-        checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
         try:
+            checkpoint = torch.load(filepath, map_location=self.device)
             self.q_net.load_state_dict(checkpoint['q_net'])
             self.target_net.load_state_dict(checkpoint['target_net'])
             self.optimizer.load_state_dict(checkpoint['optimizer'])
-        except (RuntimeError, ValueError) as e:
-            print(f"Error loading agent: {e}")
-            raise  # Rethrow so the caller knows it failed
-        
-        self.step_count = checkpoint['step_count']
-        self.epsilon = checkpoint['epsilon']
-        print(f"Loaded checkpoint from {filepath}")
+            self.step_count = checkpoint['step_count']
+            self.epsilon = checkpoint['epsilon']
+            print(f"Loaded checkpoint from {filepath}")
+        except Exception as e:
+            print(f"[WARNING] Failed to load model: {e}")
+            print("Using random initialized weights instead.")

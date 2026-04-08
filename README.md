@@ -1,4 +1,4 @@
-# 🚁 Autonomous Drone Dispatcher 3D — OpenEnv
+# Autonomous Drone Dispatcher 3D — OpenEnv
 
 *Documentation & AirSim Gallery now integrated directly into the Gradio Dashboard.*
 
