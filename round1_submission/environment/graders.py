@@ -24,11 +24,11 @@ def grade_task(*args, **kwargs):
     if len(args) == 1 and not kwargs:
         result = args[0]
         if not isinstance(result, dict):
-            return {"score": 0.0}
+            return 0.0
         env_state = result.get("env_state", result)
         task_config = result.get("task_config")
-        return _grade_task(env_state, task_config)
-    return _grade_task(*args, **kwargs)
+        return _grade_task(env_state, task_config)["score"]
+    return _grade_task(*args, **kwargs)["score"]
 
 
 def _grade_task(
