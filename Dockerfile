@@ -36,6 +36,6 @@ EXPOSE 7860
 
 # ── Entry point ───────────────────────────────────────────────────────────
 # Default: launch OpenEnv server
-ENTRYPOINT ["python"]
-CMD ["app.py"]
+# Entrypoint is empty to allow the evaluator to run 'sh inference.py' or other commands
+CMD ["python", "app.py"]
 

@@ -1,5 +1,5 @@
 # OpenEnv Manifest
-name: drone_dispatch_3d
+name: drone-airspace-3d
 version: "1.0.0"
 openenv_version: "0.2.0"
 description: >
