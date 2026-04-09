@@ -30,6 +30,7 @@ dev = [
 
 [tool.setuptools]
 packages = ["environment", "tasks"]
+package-dir = {"" = ".", "environment" = "environment", "tasks" = "tasks"}
 
 [project.scripts]
 server = "server.app:main"

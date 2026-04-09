@@ -6,10 +6,10 @@ from typing import Callable, Dict, Any
 
 try:
     from tasks.graders import grade_task_easy, grade_task_medium, grade_task_hard
-except ImportError:
+except Exception:
     try:
         from environment.graders import grade_task_easy, grade_task_medium, grade_task_hard
-    except ImportError:
+    except Exception:
         from graders import grade_task_easy, grade_task_medium, grade_task_hard
 
 
@@ -33,14 +33,14 @@ TASKS: Dict[str, TaskConfig] = {
     "medium": TaskConfig(
         task_id="medium",
         difficulty="medium",
-        description="5 drones, 4x4 grid, battery drains + bottleneck zones (restricted capacity).",
+        description="5 drones, 4x4 grid, battery drains + bottleneck zones.",
         max_steps=40,
         grader_fn=grade_task_medium,
     ),
     "hard": TaskConfig(
         task_id="hard",
         difficulty="hard",
-        description="10 drones, 5x5 grid, dynamic No-Fly Zones (NFZ) + emergency medical priorities.",
+        description="10 drones, 5x5 grid, dynamic No-Fly Zones + emergency priorities.",
         max_steps=50,
         grader_fn=grade_task_hard,
     ),

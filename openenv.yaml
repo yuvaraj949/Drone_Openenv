@@ -22,25 +22,25 @@ tasks:
     difficulty: easy
     max_steps: 30
     grader:
-      module: environment.graders
+      module: tasks.graders
       function: grade_task_easy
 
   - id: medium
     name: "Medium Congestion"
-    description: "5 drones, 4x4 grid, battery drains + bottleneck zones (restricted capacity)."
+    description: "5 drones, 4x4 grid, battery drains + bottleneck zones."
     difficulty: medium
     max_steps: 40
     grader:
-      module: environment.graders
+      module: tasks.graders
       function: grade_task_medium
 
   - id: hard
     name: "Hard Airspace"
-    description: "10 drones, 5x5 grid, dynamic No-Fly Zones (NFZ) + emergency medical priorities."
+    description: "10 drones, 5x5 grid, dynamic No-Fly Zones + emergency priorities."
     difficulty: hard
     max_steps: 50
     grader:
-      module: environment.graders
+      module: tasks.graders
       function: grade_task_hard
 
 # Grader logic
