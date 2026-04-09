@@ -23,7 +23,7 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 from openai import OpenAI
 
 from environment.drone_env import DroneTrafficEnv
-from graders import grade_task
+from environment.graders import grade_task
 from rl_agent.dqn_agent import DDQNAgent
 
 

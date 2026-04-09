@@ -22,7 +22,7 @@ tasks:
     difficulty: easy
     max_steps: 30
     grader:
-      module: graders
+      module: environment.graders
       function: grade_task
 
   - id: medium
@@ -31,7 +31,7 @@ tasks:
     difficulty: medium
     max_steps: 40
     grader:
-      module: graders
+      module: environment.graders
       function: grade_task
 
   - id: hard
@@ -40,12 +40,12 @@ tasks:
     difficulty: hard
     max_steps: 50
     grader:
-      module: graders
+      module: environment.graders
       function: grade_task
 
 # Grader logic
 grader:
-  module: graders
+  module: environment.graders
   function: grade_task
 
 # Baseline agent for scoring reproduction
