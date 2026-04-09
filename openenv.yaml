@@ -45,8 +45,8 @@ tasks:
 
 # Grader logic
 grader:
-  module: environment.graders
-  function: grade_task
+  module: tasks.graders
+  function: grade_task_easy
 
 # Baseline agent for scoring reproduction
 agent:
