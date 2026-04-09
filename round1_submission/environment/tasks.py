@@ -58,7 +58,7 @@ def _all_zones(rows: int, cols: int) -> List[str]:
 
 TASK_CONFIGS: Dict[str, dict] = {
     # ------------------------------------------------------------------
-    # EASY - 3?-3 grid, 3 drones (1 emergency), max 30 steps
+    # EASY - 3x3 grid, 3 drones (1 emergency), max 30 steps
     # ------------------------------------------------------------------
     "easy": {
         "name": "easy",
@@ -76,13 +76,13 @@ TASK_CONFIGS: Dict[str, dict] = {
         "battery_drain_per_step": 5.0,
         "emergency_deadline": 20,   # steps within which emergency must arrive
         "grader": {
-            "module": "environment.graders",
+            "module": "graders",
             "function": "grade_task",
         },
     },
 
     # ------------------------------------------------------------------
-    # MEDIUM - 4?-4 grid, 5 drones (2 emergencies), bottlenecks, max 40 steps
+    # MEDIUM - 4x4 grid, 5 drones (2 emergencies), bottlenecks, max 40 steps
     # ------------------------------------------------------------------
     "medium": {
         "name": "medium",
@@ -101,13 +101,13 @@ TASK_CONFIGS: Dict[str, dict] = {
         "battery_drain_per_step": 4.0,
         "emergency_deadline": 25,
         "grader": {
-            "module": "environment.graders",
+            "module": "graders",
             "function": "grade_task",
         },
     },
 
     # ------------------------------------------------------------------
-    # HARD - 5?-5 grid, 10 drones (3 emergencies), dynamic obstacles, max 50 steps
+    # HARD - 5x5 grid, 10 drones (3 emergencies), dynamic obstacles, max 50 steps
     # ------------------------------------------------------------------
     "hard": {
         "name": "hard",
@@ -129,7 +129,7 @@ TASK_CONFIGS: Dict[str, dict] = {
         "battery_drain_per_step": 1.0,
         "emergency_deadline": 40,
         "grader": {
-            "module": "environment.graders",
+            "module": "graders",
             "function": "grade_task",
         },
     },
@@ -142,26 +142,26 @@ TASK_CONFIGS: Dict[str, dict] = {
 
 TASKS = [
     {
-        "name": "easy",
+        "id": "easy",
         "config": TASK_CONFIGS["easy"],
         "grader": {
-            "module": "environment.graders",
+            "module": "graders",
             "function": "grade_task",
         },
     },
     {
-        "name": "medium",
+        "id": "medium",
         "config": TASK_CONFIGS["medium"],
         "grader": {
-            "module": "environment.graders",
+            "module": "graders",
             "function": "grade_task",
         },
     },
     {
-        "name": "hard",
+        "id": "hard",
         "config": TASK_CONFIGS["hard"],
         "grader": {
-            "module": "environment.graders",
+            "module": "graders",
             "function": "grade_task",
         },
     },

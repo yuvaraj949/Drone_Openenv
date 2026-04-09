@@ -16,30 +16,36 @@ max_episode_steps: 50
 
 # Task definitions
 tasks:
-  - name: easy
+  - id: easy
+    name: "Easy Navigation"
     description: "3 drones, 3x3 grid, zero obstacles. Basic navigation check."
+    difficulty: easy
     max_steps: 30
     grader:
-      module: environment.graders
+      module: graders
       function: grade_task
 
-  - name: medium
+  - id: medium
+    name: "Medium Congestion"
     description: "5 drones, 4x4 grid, battery drains + bottleneck zones (restricted capacity)."
+    difficulty: medium
     max_steps: 40
     grader:
-      module: environment.graders
+      module: graders
       function: grade_task
 
-  - name: hard
+  - id: hard
+    name: "Hard Airspace"
     description: "10 drones, 5x5 grid, dynamic No-Fly Zones (NFZ) + emergency medical priorities."
+    difficulty: hard
     max_steps: 50
     grader:
-      module: environment.graders
+      module: graders
       function: grade_task
 
 # Grader logic
 grader:
-  module: environment.graders
+  module: graders
   function: grade_task
 
 # Baseline agent for scoring reproduction
@@ -47,3 +53,16 @@ agent:
   baseline: inference.py
   type: llm-dispatcher
   notes: "Uses an LLM-based dispatcher with vertical altitude highways for collision avoidance."
+
+# Scoring mechanism
+scoring:
+  reward_range: [0.0, 1.0]
+  success_threshold: 0.5
+  score_formula: "weighted_avg(delivery, collision, emergency, efficiency)"
+
+# Infrastructure constraints
+constraints:
+  max_runtime_seconds: 300
+  max_memory_gb: 4
+  max_vcpu: 2
+

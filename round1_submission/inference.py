@@ -19,7 +19,7 @@ import torch
 from openai import OpenAI
 
 from environment.drone_env import DroneTrafficEnv
-from environment.graders import grade_episode_log, grade_task
+from graders import grade_episode_log, grade_task
 from environment.models import Action, DroneAction, DroneState, HOVER, Observation
 from rl_agent.dqn_agent import DDQNAgent
 

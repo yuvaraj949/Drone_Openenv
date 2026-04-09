@@ -58,12 +58,12 @@ def _all_zones(rows: int, cols: int) -> List[str]:
 
 TASK_CONFIGS: Dict[str, dict] = {
     # ------------------------------------------------------------------
-    # EASY - 3?-3 grid, 3 drones (1 emergency), max 30 steps
+    # EASY - 3x3 grid, 3 drones (1 emergency), max 30 steps
     # ------------------------------------------------------------------
     "easy": {
-        "name": "easy",
+        "id": "easy",
         "description": (
-            "3-drone scenario on a 3?-3 grid with one emergency drone. "
+            "3-drone scenario on a 3x3 grid with one emergency drone. "
             "Goal: route all drones to their destinations without collision."
         ),
         "rows": 3,
@@ -75,15 +75,19 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],  # list of (step_range, zone) that become blocked
         "battery_drain_per_step": 5.0,
         "emergency_deadline": 20,   # steps within which emergency must arrive
+        "grader": {
+            "module": "graders",
+            "function": "grade_task",
+        },
     },
 
     # ------------------------------------------------------------------
-    # MEDIUM - 4?-4 grid, 5 drones (2 emergencies), bottlenecks, max 40 steps
+    # MEDIUM - 4x4 grid, 5 drones (2 emergencies), bottlenecks, max 40 steps
     # ------------------------------------------------------------------
     "medium": {
-        "name": "medium",
+        "id": "medium",
         "description": (
-            "5-drone scenario on a 4?-4 grid with two emergency drones and "
+            "5-drone scenario on a 4x4 grid with two emergency drones and "
             "bottleneck zones (B2, C3) that can hold at most one drone. "
             "Tests congestion awareness and priority routing."
         ),
@@ -96,19 +100,23 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],
         "battery_drain_per_step": 4.0,
         "emergency_deadline": 25,
+        "grader": {
+            "module": "graders",
+            "function": "grade_task",
+        },
     },
 
     # ------------------------------------------------------------------
-    # HARD - 5?-5 grid, 10 drones (3 emergencies), dynamic obstacles, max 50 steps
+    # HARD - 5x5 grid, 10 drones (3 emergencies), dynamic obstacles, max 50 steps
     # ------------------------------------------------------------------
     "hard": {
-        "name": "hard",
+        "id": "hard",
         "description": (
-            "10-drone scenario on a 10?-10 grid with three emergency drones. "
-            "Optimised for AirSim high-fidelity city transitions."
+            "10-drone scenario on a 5x5 grid with three emergency drones. "
+            "Includes dynamic obstacles and priority routing."
         ),
-        "rows": 10,
-        "cols": 10,
+        "rows": 5,
+        "cols": 5,
         "num_drones": 10,
         "num_emergencies": 3,
         "max_steps": 50,
@@ -120,8 +128,44 @@ TASK_CONFIGS: Dict[str, dict] = {
         ],
         "battery_drain_per_step": 1.0,
         "emergency_deadline": 40,
+        "grader": {
+            "module": "graders",
+            "function": "grade_task",
+        },
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Task manifest with graders (for OpenEnv validators)
+# ---------------------------------------------------------------------------
+
+TASKS = [
+    {
+        "id": "easy",
+        "config": TASK_CONFIGS["easy"],
+        "grader": {
+            "module": "graders",
+            "function": "grade_task",
+        },
+    },
+    {
+        "id": "medium",
+        "config": TASK_CONFIGS["medium"],
+        "grader": {
+            "module": "graders",
+            "function": "grade_task",
+        },
+    },
+    {
+        "id": "hard",
+        "config": TASK_CONFIGS["hard"],
+        "grader": {
+            "module": "graders",
+            "function": "grade_task",
+        },
+    },
+]
 
 
 def get_task_config(task_name: str) -> dict:
