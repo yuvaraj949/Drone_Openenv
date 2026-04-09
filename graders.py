@@ -19,7 +19,19 @@ from typing import Any, Dict, List, Optional
 # Public grading surface
 # ---------------------------------------------------------------------------
 
-def grade_task(
+def grade_task(*args, **kwargs):
+    """Public grader entrypoint compatible with OpenEnv evaluators."""
+    if len(args) == 1 and not kwargs:
+        result = args[0]
+        if not isinstance(result, dict):
+            return {"score": 0.01}  # Strictly within (0, 1), not 0.0
+        env_state = result.get("env_state", result)
+        task_config = result.get("task_config")
+        return _grade_task(env_state, task_config)
+    return _grade_task(*args, **kwargs)
+
+
+def _grade_task(
     env_state: Dict[str, Any],
     task_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
@@ -40,14 +52,16 @@ def grade_task(
 
     Returns
     -------
-    float
-        Final hackathon score for this episode.
+    dict
+        Normalized grading result with keys: "score", "delivered", "collisions",
+        "delivery_rate", "emergency_score", "efficiency_score".
+        Score is normalized in [0.0, 1.0].
     """
     drones: List[Dict[str, Any]] = env_state.get("drones", [])
     total_drones = len(drones)
     if total_drones == 0:
         return {
-            "score": 0.0,
+            "score": 0.01,  # Strictly within (0, 1), not 0.0
             "delivered": 0,
             "collisions": 0,
             "delivery_rate": 0.0,
@@ -95,8 +109,11 @@ def grade_task(
         + 0.10 * efficiency_score
     )
 
+    # Clamp score strictly within (0, 1), not including boundaries [0.01, 0.99]
+    clamped_score = max(0.01, min(0.99, score))
+
     return {
-        "score": round(min(max(score, 0.0), 1.0), 4),
+        "score": round(clamped_score, 4),
         "delivered": delivered,
         "collisions": collisions,
         "delivery_rate": round(delivery_rate, 4),
