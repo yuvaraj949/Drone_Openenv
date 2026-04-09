@@ -1,26 +1,10 @@
 """
 Task configurations for the Drone Traffic Control environment.
-
-Each task defines:
-  - grid size and topology
-  - number of drones / emergencies
-  - max episode steps
-  - optional dynamic obstacles (hard task)
-  - a human-readable description
-
-Tasks scale in complexity:
-  easy   -> 3x3 grid,  3 drones, 1 emergency
-  medium -> 4x4 grid,  5 drones, 2 emergencies, bottleneck zones
-  hard   -> 5x5 grid, 10 drones, 3 emergencies, dynamic obstacles
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
-
-# ---------------------------------------------------------------------------
-# Graph builder helpers
-# ---------------------------------------------------------------------------
 
 def _build_grid_graph(rows: int, cols: int) -> Dict[str, List[str]]:
     """Create a full grid adjacency list. Zones are labelled row-letter + col-number."""
@@ -52,16 +36,12 @@ def _all_zones(rows: int, cols: int) -> List[str]:
     return [f"{row}{c}" for row in row_labels for c in range(1, cols + 1)]
 
 
-# ---------------------------------------------------------------------------
-# Task registry
-# ---------------------------------------------------------------------------
-
 TASK_CONFIGS: Dict[str, dict] = {
     # ------------------------------------------------------------------
     # EASY - 3x3 grid, 3 drones (1 emergency), max 30 steps
     # ------------------------------------------------------------------
     "easy": {
-        "name": "easy",
+        "id": "easy",
         "description": (
             "3-drone scenario on a 3x3 grid with one emergency drone. "
             "Goal: route all drones to their destinations without collision."
@@ -85,11 +65,10 @@ TASK_CONFIGS: Dict[str, dict] = {
     # MEDIUM - 4x4 grid, 5 drones (2 emergencies), bottlenecks, max 40 steps
     # ------------------------------------------------------------------
     "medium": {
-        "name": "medium",
+        "id": "medium",
         "description": (
             "5-drone scenario on a 4x4 grid with two emergency drones and "
-            "bottleneck zones (B2, C3) that can hold at most one drone. "
-            "Tests congestion awareness and priority routing."
+            "bottleneck zones (B2, C3) that can hold at most one drone."
         ),
         "rows": 4,
         "cols": 4,
@@ -110,7 +89,7 @@ TASK_CONFIGS: Dict[str, dict] = {
     # HARD - 5x5 grid, 10 drones (3 emergencies), dynamic obstacles, max 50 steps
     # ------------------------------------------------------------------
     "hard": {
-        "name": "hard",
+        "id": "hard",
         "description": (
             "10-drone scenario on a 5x5 grid with three emergency drones. "
             "Includes dynamic obstacles and priority routing."
@@ -121,7 +100,7 @@ TASK_CONFIGS: Dict[str, dict] = {
         "num_emergencies": 3,
         "max_steps": 50,
         "max_altitude": 100.0,
-        "bottleneck_zones": ["E5", "F6", "G5"],
+        "bottleneck_zones": ["E5", "D4", "C5"],  # FIXED: Removed out-of-bounds F6, G5
         "dynamic_obstacles": [
             (10, 20, "C2"),
             (25, 35, "D4"),

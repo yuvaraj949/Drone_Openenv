@@ -230,6 +230,29 @@ class DroneTrafficEnv:
         """Return per-step reward history for the current episode."""
         return list(self._episode_rewards)
 
+    def sample_action(self) -> Action:
+        """Return a random valid action for all active drones."""
+        drone_actions = []
+        for drone in self._drones:
+            if drone.delivered:
+                continue
+            
+            # Horizontal move
+            possible_zones = self.graph.get(drone.location, []) + [HOVER]
+            move_to = self._rng.choice(possible_zones)
+            
+            # Vertical move (-2.0 to 2.0)
+            dz = self._rng.uniform(-2.0, 2.0)
+            
+            drone_actions.append(
+                DroneAction(
+                    drone_id=drone.id,
+                    move_to=move_to,
+                    vertical_command=dz
+                )
+            )
+        return Action(actions=drone_actions)
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
