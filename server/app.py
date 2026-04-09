@@ -203,6 +203,26 @@ async def state() -> Dict[str, Any]:
     return {"state": state_dict}
 
 
+@app.get("/tasks")
+async def tasks() -> Dict[str, Any]:
+    """Return task definitions and action schema."""
+    from environment.tasks import TASKS, TASK_CONFIGS
+    from environment.models import Action
+    return {
+        "tasks": TASKS,
+        "action_schema": Action.model_json_schema() if hasattr(Action, 'model_json_schema') else Action.schema()
+    }
+
+
+@app.post("/grader")
+async def grader(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Score a completed episode."""
+    env_state = data.get("env_state", data)
+    task_config = data.get("task_config")
+    result = grade_task(env_state, task_config)
+    return result
+
+
 @app.get("/health")
 async def health() -> Dict[str, str]:
     return {"status": "ok"}
