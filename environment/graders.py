@@ -3,11 +3,28 @@ Grader logic for the Drone Traffic Control environment.
 
 The grader receives a completed episode state and returns a normalized
 score in [0.01, 0.99] plus diagnostic metrics.
+
+Per-task graders: grade_task_easy, grade_task_medium, grade_task_hard
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+
+
+def grade_task_easy(env_state: Dict[str, Any], task_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Grader for easy task."""
+    return _grade_task(env_state, task_config, difficulty="easy")
+
+
+def grade_task_medium(env_state: Dict[str, Any], task_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Grader for medium task."""
+    return _grade_task(env_state, task_config, difficulty="medium")
+
+
+def grade_task_hard(env_state: Dict[str, Any], task_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Grader for hard task."""
+    return _grade_task(env_state, task_config, difficulty="hard")
 
 
 def grade_task(*args, **kwargs) -> Dict[str, Any]:
@@ -37,6 +54,7 @@ def grade_task(*args, **kwargs) -> Dict[str, Any]:
 def _grade_task(
     env_state: Dict[str, Any],
     task_config: Optional[Dict[str, Any]] = None,
+    difficulty: str = "medium",
 ) -> Dict[str, Any]:
     """
     Compute a normalized score from completed episode state.

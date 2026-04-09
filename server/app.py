@@ -206,10 +206,24 @@ async def state() -> Dict[str, Any]:
 @app.get("/tasks")
 async def tasks() -> Dict[str, Any]:
     """Return task definitions and action schema."""
-    from environment.tasks import TASKS, TASK_CONFIGS
+    try:
+        from tasks import TASKS
+        task_list = [
+            {
+                "id": task.task_id,
+                "difficulty": task.difficulty,
+                "description": task.description,
+                "max_steps": task.max_steps,
+                "grader": "tasks.graders.grade_task_" + task.difficulty
+            }
+            for task in TASKS.values()
+        ]
+    except ImportError:
+        from environment.tasks import TASKS as old_tasks
+        task_list = old_tasks
     from environment.models import Action
     return {
-        "tasks": TASKS,
+        "tasks": task_list,
         "action_schema": Action.model_json_schema() if hasattr(Action, 'model_json_schema') else Action.schema()
     }
 

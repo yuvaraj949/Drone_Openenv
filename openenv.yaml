@@ -23,7 +23,7 @@ tasks:
     max_steps: 30
     grader:
       module: environment.graders
-      function: grade_task
+      function: grade_task_easy
 
   - id: medium
     name: "Medium Congestion"
@@ -32,7 +32,7 @@ tasks:
     max_steps: 40
     grader:
       module: environment.graders
-      function: grade_task
+      function: grade_task_medium
 
   - id: hard
     name: "Hard Airspace"
@@ -41,7 +41,7 @@ tasks:
     max_steps: 50
     grader:
       module: environment.graders
-      function: grade_task
+      function: grade_task_hard
 
 # Grader logic
 grader:
