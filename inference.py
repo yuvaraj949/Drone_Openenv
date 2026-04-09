@@ -11,8 +11,14 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import Dict, List, Optional
+import warnings
 
+# Suppress TensorFlow/oneDNN warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+warnings.filterwarnings('ignore')
+
+from typing import Dict, List, Optional
 import torch
 from openai import OpenAI
 
@@ -24,7 +30,6 @@ from rl_agent.dqn_agent import DDQNAgent
 # Configuration & Mandatory Environment Variables
 # ---------------------------------------------------------------------------
 
-# Expert Source requirement: strict environment variable defaults
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -52,7 +57,6 @@ AGENT_CONFIG = {
 def get_mission_strategy(task_name: str, num_drones: int) -> str:
     """Optional OpenAI call for high-level planning."""
     try:
-        # Expert Source requirement: strict initialize from openai import OpenAI
         client = OpenAI(
             base_url=API_BASE_URL,
             api_key=HF_TOKEN,
@@ -100,7 +104,7 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> None:
     strategy = get_mission_strategy(task_name, len(obs.drones))
 
     # [START] log
-    print(f"[START] task={task_name} env=drone_traffic_control model={MODEL_NAME}")
+    print(f"[START] task={task_name} env=drone-airspace-3d model={MODEL_NAME}")
     # Strategy log on stderr to keep stdout strictly compliant
     print(f"INFO: Strategy: {strategy}", file=sys.stderr)
 
@@ -147,28 +151,20 @@ def run_episode(task_name: str = "easy", seed: Optional[int] = None) -> None:
             pass
 
         # Final Grading
+        raw_score = 0.0
         try:
             final_state = env.state()
             grading_result = grade_task(final_state, getattr(env, "cfg", None))
             if isinstance(grading_result, dict):
-                success = float(grading_result.get("score", 0.0)) >= 0.5
+                raw_score = float(grading_result.get("score", 0.0))
+                success = raw_score >= 0.5
         except Exception:
             success = False
         
         # [END] log
-        # Mandatory format: success=bool steps=N rewards=R1,R2,...
-        # (Removed 'score=' to match expert source instructions)
+        # Mandatory format: success=bool steps=N score=F.FF rewards=R1,R2,...
         reward_list_str = ",".join([f"{r:.2f}" for r in rewards])
-        print(f"[END] success={str(success).lower()} steps={step_idx} rewards={reward_list_str}")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="OpenEnv Drone Dispatcher Baseline")
-    parser.add_argument("--task", choices=["easy", "medium", "hard"], default="easy")
-    parser.add_argument("--seed", type=int, default=None)
-    args = parser.parse_args()
-
-    run_episode(task_name=args.task, seed=args.seed)
+        print(f"[END] success={str(success).lower()} steps={step_idx} score={raw_score:.2f} rewards={reward_list_str}")
 
 
 if __name__ == "__main__":

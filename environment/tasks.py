@@ -51,19 +51,13 @@ TASK_CONFIGS: Dict[str, dict] = {
         "num_drones": 3,
         "num_emergencies": 1,
         "max_steps": 30,
-        "bottleneck_zones": [],   # zones restricted to 1 drone at a time
-        "dynamic_obstacles": [],  # list of (step_range, zone) that become blocked
+        "bottleneck_zones": [],
+        "dynamic_obstacles": [],
         "battery_drain_per_step": 5.0,
-        "emergency_deadline": 20,   # steps within which emergency must arrive
-        "grader": {
-            "module": "graders",
-            "function": "grade_task",
-        },
+        "emergency_deadline": 20,
+        "grader": "graders:grade_task",
     },
 
-    # ------------------------------------------------------------------
-    # MEDIUM - 4x4 grid, 5 drones (2 emergencies), bottlenecks, max 40 steps
-    # ------------------------------------------------------------------
     "medium": {
         "id": "medium",
         "description": (
@@ -79,15 +73,9 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],
         "battery_drain_per_step": 4.0,
         "emergency_deadline": 25,
-        "grader": {
-            "module": "graders",
-            "function": "grade_task",
-        },
+        "grader": "graders:grade_task",
     },
 
-    # ------------------------------------------------------------------
-    # HARD - 5x5 grid, 10 drones (3 emergencies), dynamic obstacles, max 50 steps
-    # ------------------------------------------------------------------
     "hard": {
         "id": "hard",
         "description": (
@@ -100,49 +88,32 @@ TASK_CONFIGS: Dict[str, dict] = {
         "num_emergencies": 3,
         "max_steps": 50,
         "max_altitude": 100.0,
-        "bottleneck_zones": ["E5", "D4", "C5"],  # FIXED: Removed out-of-bounds F6, G5
+        "bottleneck_zones": ["E5", "D4", "C5"],
         "dynamic_obstacles": [
             (10, 20, "C2"),
             (25, 35, "D4"),
         ],
         "battery_drain_per_step": 1.0,
         "emergency_deadline": 40,
-        "grader": {
-            "module": "graders",
-            "function": "grade_task",
-        },
+        "grader": "graders:grade_task",
     },
 }
-
-
-# ---------------------------------------------------------------------------
-# Task manifest with graders (for OpenEnv validators)
-# ---------------------------------------------------------------------------
 
 TASKS = [
     {
         "id": "easy",
         "config": TASK_CONFIGS["easy"],
-        "grader": {
-            "module": "graders",
-            "function": "grade_task",
-        },
+        "grader": "graders:grade_task",
     },
     {
         "id": "medium",
         "config": TASK_CONFIGS["medium"],
-        "grader": {
-            "module": "graders",
-            "function": "grade_task",
-        },
+        "grader": "graders:grade_task",
     },
     {
         "id": "hard",
         "config": TASK_CONFIGS["hard"],
-        "grader": {
-            "module": "graders",
-            "function": "grade_task",
-        },
+        "grader": "graders:grade_task",
     },
 ]
 

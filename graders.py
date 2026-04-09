@@ -80,7 +80,11 @@ def _grade_task(
         + 0.10 * efficiency_score
     )
 
-    # Clamp score strictly within (0, 1)
+    # Safety Check: ensure score is numeric
+    if score is None or not isinstance(score, (int, float)):
+        score = 0.01
+
+    # Clamp score strictly within (0, 1) - Exclusive boundaries [0.01, 0.99]
     clamped_score = max(0.01, min(0.99, score))
 
     return {
