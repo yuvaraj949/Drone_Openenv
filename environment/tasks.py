@@ -3,45 +3,58 @@ Task configurations for the Drone Traffic Control environment.
 """
 
 from __future__ import annotations
+
 from typing import Dict, List
 
 
 def _build_grid_graph(rows: int, cols: int) -> Dict[str, List[str]]:
-    """Create a full grid adjacency list. Zones are labelled row-letter + col-number."""
-    row_labels = [chr(ord("A") + r) for r in range(rows)]
+    """
+    Build a 4-neighbour grid adjacency list.
+
+    Zone labels follow:
+    - Rows: A, B, C, ...
+    - Columns: 1, 2, 3, ...
+    Example: A1, A2, B1, B2
+    """
     graph: Dict[str, List[str]] = {}
 
-    for r, row in enumerate(row_labels):
+    for r in range(rows):
+        row_label = chr(ord("A") + r)
         for c in range(1, cols + 1):
-            zone = f"{row}{c}"
+            zone = f"{row_label}{c}"
             neighbours: List[str] = []
-            # left / right
+
+            # Left / right
             if c > 1:
-                neighbours.append(f"{row}{c - 1}")
+                neighbours.append(f"{row_label}{c - 1}")
             if c < cols:
-                neighbours.append(f"{row}{c + 1}")
-            # up / down (previous / next row)
+                neighbours.append(f"{row_label}{c + 1}")
+
+            # Up / down
             if r > 0:
-                neighbours.append(f"{chr(ord(row) - 1)}{c}")
+                neighbours.append(f"{chr(ord('A') + r - 1)}{c}")
             if r < rows - 1:
-                neighbours.append(f"{chr(ord(row) + 1)}{c}")
+                neighbours.append(f"{chr(ord('A') + r + 1)}{c}")
+
             graph[zone] = neighbours
 
     return graph
 
 
 def _all_zones(rows: int, cols: int) -> List[str]:
-    """Return all zone labels for an r?-c grid."""
-    row_labels = [chr(ord("A") + r) for r in range(rows)]
-    return [f"{row}{c}" for row in row_labels for c in range(1, cols + 1)]
+    """Return all zone labels for the grid."""
+    zones: List[str] = []
+    for r in range(rows):
+        row_label = chr(ord("A") + r)
+        for c in range(1, cols + 1):
+            zones.append(f"{row_label}{c}")
+    return zones
 
 
 TASK_CONFIGS: Dict[str, dict] = {
-    # ------------------------------------------------------------------
-    # EASY - 3x3 grid, 3 drones (1 emergency), max 30 steps
-    # ------------------------------------------------------------------
     "easy": {
         "id": "easy",
+        "name": "easy",
         "description": (
             "3-drone scenario on a 3x3 grid with one emergency drone. "
             "Goal: route all drones to their destinations without collision."
@@ -55,14 +68,14 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],
         "battery_drain_per_step": 5.0,
         "emergency_deadline": 20,
-        "grader": "graders:grade_task",
+        "max_altitude": 100.0,
     },
-
     "medium": {
         "id": "medium",
+        "name": "medium",
         "description": (
             "5-drone scenario on a 4x4 grid with two emergency drones and "
-            "bottleneck zones (B2, C3) that can hold at most one drone."
+            "bottleneck zones that can hold at most one drone."
         ),
         "rows": 4,
         "cols": 4,
@@ -73,11 +86,11 @@ TASK_CONFIGS: Dict[str, dict] = {
         "dynamic_obstacles": [],
         "battery_drain_per_step": 4.0,
         "emergency_deadline": 25,
-        "grader": "graders:grade_task",
+        "max_altitude": 100.0,
     },
-
     "hard": {
         "id": "hard",
+        "name": "hard",
         "description": (
             "10-drone scenario on a 5x5 grid with three emergency drones. "
             "Includes dynamic obstacles and priority routing."
@@ -87,7 +100,6 @@ TASK_CONFIGS: Dict[str, dict] = {
         "num_drones": 10,
         "num_emergencies": 3,
         "max_steps": 50,
-        "max_altitude": 100.0,
         "bottleneck_zones": ["E5", "D4", "C5"],
         "dynamic_obstacles": [
             (10, 20, "C2"),
@@ -95,36 +107,28 @@ TASK_CONFIGS: Dict[str, dict] = {
         ],
         "battery_drain_per_step": 1.0,
         "emergency_deadline": 40,
-        "grader": "graders:grade_task",
+        "max_altitude": 100.0,
     },
 }
 
+
 TASKS = [
-    {
-        "id": "easy",
-        "config": TASK_CONFIGS["easy"],
-        "grader": "graders:grade_task",
-    },
-    {
-        "id": "medium",
-        "config": TASK_CONFIGS["medium"],
-        "grader": "graders:grade_task",
-    },
-    {
-        "id": "hard",
-        "config": TASK_CONFIGS["hard"],
-        "grader": "graders:grade_task",
-    },
+    {"id": "easy", "config": TASK_CONFIGS["easy"]},
+    {"id": "medium", "config": TASK_CONFIGS["medium"]},
+    {"id": "hard", "config": TASK_CONFIGS["hard"]},
 ]
 
 
 def get_task_config(task_name: str) -> dict:
-    """Return the task config dict and inject a pre-built adjacency graph."""
+    """
+    Return a copy of the selected task config with derived fields added.
+    """
     if task_name not in TASK_CONFIGS:
         raise ValueError(
             f"Unknown task '{task_name}'. Valid options: {list(TASK_CONFIGS.keys())}"
         )
-    cfg = TASK_CONFIGS[task_name].copy()
+
+    cfg = dict(TASK_CONFIGS[task_name])
     cfg["graph"] = _build_grid_graph(cfg["rows"], cfg["cols"])
     cfg["all_zones"] = _all_zones(cfg["rows"], cfg["cols"])
     return cfg
